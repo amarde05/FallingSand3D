@@ -19,6 +19,15 @@ namespace engine {
 	const bool ENABLE_VALIDATION_LAYERS = true;
 #endif
 
+#define FRAME_OVERLAP 2
+
+	struct FrameData {
+		VkCommandBuffer frameCommandBuffer;
+		
+		VkFence renderFence;
+		VkSemaphore presentSemaphore, renderSemaphore;
+	};
+
 	class VulkanEngine {
 	public:
 		static VulkanEngine& Get();
@@ -62,6 +71,9 @@ namespace engine {
 
 		VkDescriptorSetLayout mDescriptorSetLayout;
 
+		// Frame objects
+		FrameData mFrames[FRAME_OVERLAP];
+
 
 		void createInstance();
 		void setupDebugMessenger();
@@ -71,12 +83,19 @@ namespace engine {
 		void createSwapchainImageViews();
 		void cleanupSwapchain();
 
+		void allocateCommandBuffers();
+
 		void createRenderPass();
+		void createFramebuffers();
+
+		void createSyncStructures();
 
 		void createDescriptorSetLayout();
 
 		bool checkValidationLayerSupport() const;
 		bool checkInstanceExtensionSupport(std::vector<const char*>& extensions) const;
 		std::vector<const char*> getRequiredSDLExtensions() const;
+
+		FrameData& getCurrentFrame() { return mFrames[mFrameNumber % FRAME_OVERLAP]; }
 	};
 }

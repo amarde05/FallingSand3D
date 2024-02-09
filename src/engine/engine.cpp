@@ -167,13 +167,29 @@ namespace engine {
 		createSwapchain();
 		createSwapchainImageViews();
 
-		// Everything went according to plan, chief
+		allocateCommandBuffers();
+
+		createRenderPass();
+		createFramebuffers();
+
+		createSyncStructures();
+
+		// Everything is initialized, so set mIsInitialized to true
 		mIsInitialized = true;
 	}
 
 	void VulkanEngine::cleanup() {
 		if (mIsInitialized) {
 			cleanupSwapchain();
+
+			vkDestroyRenderPass(mDevice->getDevice(), mRenderPass, nullptr);
+
+			for (int i = 0; i < FRAME_OVERLAP; i++) {
+				vkDestroyFence(mDevice->getDevice(), mFrames[i].renderFence, nullptr);
+
+				vkDestroySemaphore(mDevice->getDevice(), mFrames[i].presentSemaphore, nullptr);
+				vkDestroySemaphore(mDevice->getDevice(), mFrames[i].renderSemaphore, nullptr);
+			}
 
 			mDevice = nullptr;
 
@@ -193,7 +209,112 @@ namespace engine {
 	}
 
 	void VulkanEngine::draw() {
+		// Wait until the GPU has finished rendering the last frame. Timeout of 1 second
+		vkWaitForFences(mDevice->getDevice(), 1, &getCurrentFrame().renderFence, true, 1000000000);
+		vkResetFences(mDevice->getDevice(), 1, &getCurrentFrame().renderFence);
 
+		// Request image from the swapchain. Timeout of 1 second
+		uint32_t swapchainImageIndex;
+		if (vkAcquireNextImageKHR(mDevice->getDevice(), mSwapchain, 1000000000, getCurrentFrame().presentSemaphore, nullptr, &swapchainImageIndex) != VK_SUCCESS) {
+			util::displayError("Failed to acquire next swapchain image");
+		}
+
+		// Reset command buffer now that we know the GPU has finished rendering the last frame
+		if (vkResetCommandBuffer(getCurrentFrame().frameCommandBuffer, 0) != VK_SUCCESS) {
+			util::displayError("Failed to reset command buffer");
+		}
+
+		VkCommandBuffer cmd = getCurrentFrame().frameCommandBuffer;
+
+		VkCommandBufferBeginInfo cmdBeginInfo{};
+		cmdBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		cmdBeginInfo.pNext = nullptr;
+
+		cmdBeginInfo.pInheritanceInfo = nullptr;
+		cmdBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		if (vkBeginCommandBuffer(cmd, &cmdBeginInfo) != VK_SUCCESS) {
+			util::displayError("Failed to begin command buffer");
+		}
+
+		// Make a clear color from frame number. This will flash with a 120*pi frame period
+		VkClearValue clearValue;
+		float flash = abs(sin(mFrameNumber / 120.0f));
+		clearValue.color = { {0.0f, 0.0f, flash, 1.0f } };
+
+		// Start the main render pass
+		VkRenderPassBeginInfo renderpassInfo{};
+		renderpassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderpassInfo.pNext = nullptr;
+
+		renderpassInfo.renderPass = mRenderPass;
+		renderpassInfo.renderArea.offset.x = 0;
+		renderpassInfo.renderArea.offset.y = 0;
+		renderpassInfo.renderArea.extent = mWindowExtent;
+		renderpassInfo.framebuffer = mSwapchainFramebuffers[swapchainImageIndex];
+
+		// Connect clear values
+		renderpassInfo.clearValueCount = 1;
+		renderpassInfo.pClearValues = &clearValue;
+
+		// Begin the render pass
+		vkCmdBeginRenderPass(cmd, &renderpassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		// Finalize the render pass
+		vkCmdEndRenderPass(cmd);
+
+		// Finalize the command buffer
+		if (vkEndCommandBuffer(cmd) != VK_SUCCESS) {
+			util::displayError("Failed to end renderpass");
+		}
+
+		// Prepare for submission to the queue
+		// Wait on the present semaphore to know when the swapchain is ready
+		// Signal the render semaphore to signal that rendering has finished
+
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.pNext = nullptr;
+
+		VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+		submitInfo.pWaitDstStageMask = &waitStage;
+		
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = &getCurrentFrame().presentSemaphore;
+		
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = &getCurrentFrame().renderSemaphore;
+
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &cmd;
+
+		// Submit command buffer to the queue and execute it
+		// The render fence will block until graphics commands finish
+		if (vkQueueSubmit(mDevice->getGraphicsQueue(), 1, &submitInfo, getCurrentFrame().renderFence) != VK_SUCCESS) {
+			util::displayError("Failed to submit to queue");
+		}
+
+		// Display the newly-rendered image to the window
+		// Wait on the render semaphore
+		VkPresentInfoKHR presentInfo{};
+		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		presentInfo.pNext = nullptr;
+
+		presentInfo.swapchainCount = 1;
+		presentInfo.pSwapchains = &mSwapchain;
+
+		presentInfo.waitSemaphoreCount = 1;
+		presentInfo.pWaitSemaphores = &getCurrentFrame().renderSemaphore;
+
+		presentInfo.pImageIndices = &swapchainImageIndex;
+
+		if (vkQueuePresentKHR(mDevice->getGraphicsQueue(), &presentInfo) != VK_SUCCESS) {
+			util::displayError("Failed to queue present");
+		}
+
+		// Increase the number of frames drawn
+		mFrameNumber++;
 	}
 
 	void VulkanEngine::run() {
@@ -229,6 +350,9 @@ namespace engine {
 				draw();
 			}
 		}
+
+		// Ensure that no more graphics commands are being run
+		vkQueueWaitIdle(mDevice->getGraphicsQueue());
 	}
 
 	// Vulkan initialization functions
@@ -296,6 +420,7 @@ namespace engine {
 		}
 	}
 
+
 	void VulkanEngine::createSurface() {
 		if (SDL_Vulkan_CreateSurface(mWindow, mInstance, &mSurface) != SDL_TRUE) {
 			util::displayError("Failed to create surface!");
@@ -326,7 +451,7 @@ namespace engine {
 		createInfo.imageArrayLayers = 1;
 		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-		QueueFamilyIndices indices = mDevice->findPhysicalQueueFamilies();
+		QueueFamilyIndices indices = mDevice->getQueueFamilyIndices();
 		uint32_t queueFamilyIndices[] = { indices.graphicsFamily, indices.presentFamily };
 
 		if (indices.graphicsFamily != indices.presentFamily) {
@@ -369,16 +494,26 @@ namespace engine {
 		}
 	}
 
+
+	void VulkanEngine::allocateCommandBuffers() {
+		for (int i = 0; i < FRAME_OVERLAP; i++) {
+			mDevice->getGraphicsPool().allocateBuffers(&mFrames[i].frameCommandBuffer, 1);
+		}
+	}
+
+
 	void VulkanEngine::createRenderPass() {
 		VkAttachmentDescription colorAttachment{};
 		colorAttachment.format = mSwapchainImageFormat;
-		colorAttachment.samples = mDevice->getDeviceProperties().maxSamples;
+		//colorAttachment.samples = mDevice->getDeviceProperties().maxSamples;
+		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		//colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 		VkAttachmentReference colorAttachmentRef{};
 		colorAttachmentRef.attachment = 0;
@@ -416,30 +551,86 @@ namespace engine {
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpass.colorAttachmentCount = 1;
 		subpass.pColorAttachments = &colorAttachmentRef;
-		subpass.pResolveAttachments = &colorAttachmentResolveRef;
-		subpass.pDepthStencilAttachment = &depthAttachmentRef;
+		//subpass.pResolveAttachments = &colorAttachmentResolveRef;
+		//subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
-		VkSubpassDependency dependency{};
+		/*VkSubpassDependency dependency{};
 		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 		dependency.dstSubpass = 0;
 		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 		dependency.srcAccessMask = 0;
 		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-		std::array<VkAttachmentDescription, 3> attachments = { colorAttachment, depthAttachment, colorAttachmentResolve };
+		*/
+		//std::array<VkAttachmentDescription, 3> attachments = { colorAttachment, depthAttachment, colorAttachmentResolve };
 
 		VkRenderPassCreateInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-		renderPassInfo.pAttachments = attachments.data();
+		renderPassInfo.attachmentCount = 1;//static_cast<uint32_t>(attachments.size());
+		renderPassInfo.pAttachments = &colorAttachment;//attachments.data();
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subpass;
-		renderPassInfo.dependencyCount = 1;
-		renderPassInfo.pDependencies = &dependency;
+		//renderPassInfo.dependencyCount = 1;
+		//renderPassInfo.pDependencies = &dependency;
 
 		if (vkCreateRenderPass(mDevice->getDevice(), &renderPassInfo, nullptr, &mRenderPass) != VK_SUCCESS) {
 			util::displayError("Failed to create renderpass");
+		}
+	}
+
+	void VulkanEngine::createFramebuffers() {
+		// Create framebuffers for the swapchain images
+		// This will connect the renderpass to the images for rendering
+		VkFramebufferCreateInfo frameBufferInfo{};
+		frameBufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		frameBufferInfo.pNext = nullptr;
+
+		frameBufferInfo.renderPass = mRenderPass;
+		frameBufferInfo.attachmentCount = 1;
+		frameBufferInfo.width = mWindowExtent.width;
+		frameBufferInfo.height = mWindowExtent.height;
+		frameBufferInfo.layers = 1;
+
+		const uint32_t swapchainImageCount = mSwapchainImages.size();
+		mSwapchainFramebuffers = std::vector<VkFramebuffer>(swapchainImageCount);
+
+		// Create framebuffers for each of the swapchain image views
+		for (int i = 0; i < swapchainImageCount; i++) {
+			frameBufferInfo.pAttachments = &mSwapchainImageViews[i];
+
+			if (vkCreateFramebuffer(mDevice->getDevice(), &frameBufferInfo, nullptr, &mSwapchainFramebuffers[i]) != VK_SUCCESS) {
+				util::displayError("Failed to create framebuffers");
+			}
+		}
+	}
+
+
+	void VulkanEngine::createSyncStructures() {
+		VkFenceCreateInfo fenceCreateInfo{};
+		fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fenceCreateInfo.pNext = nullptr;
+
+		// Create the fence with the VK_FENCE_CREATE_SIGNALED_BIT flag so it can be waited on before being used by a GPU Command
+		fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+		VkSemaphoreCreateInfo semaphoreCreateInfo{};
+		semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		semaphoreCreateInfo.pNext = nullptr;
+		semaphoreCreateInfo.flags = 0;
+
+		// Create the sync structures for each frame
+		for (int i = 0; i < FRAME_OVERLAP; i++) {
+			if (vkCreateFence(mDevice->getDevice(), &fenceCreateInfo, nullptr, &mFrames[i].renderFence) != VK_SUCCESS) {
+				util::displayError("Failed to create fence");
+			}
+
+			if (vkCreateSemaphore(mDevice->getDevice(), &semaphoreCreateInfo, nullptr, &mFrames[i].presentSemaphore) != VK_SUCCESS) {
+				util::displayError("Failed to create present semaphore");
+			}
+
+			if (vkCreateSemaphore(mDevice->getDevice(), &semaphoreCreateInfo, nullptr, &mFrames[i].renderSemaphore) != VK_SUCCESS) {
+				util::displayError("Failed to create render semaphore");
+			}
 		}
 	}
 

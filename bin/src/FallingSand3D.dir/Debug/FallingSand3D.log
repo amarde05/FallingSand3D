@@ -1,4 +1,6 @@
-﻿  device.cpp
-C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\device.cpp(53): warning C4715: 'engine::VulkanDevice::findSupportedFormat': not all control paths return a value
-C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\device.cpp(37): warning C4715: 'engine::VulkanDevice::findMemoryType': not all control paths return a value
+﻿  engine.cpp
+C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\engine.cpp(594,61): warning C4267: 'initializing': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\engine.cpp(594,38): warning C4267: 'initializing': conversion from 'size_t' to 'const uint32_t', possible loss of data
+C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\engine.cpp(598,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\engine.cpp(119): warning C4715: '`anonymous namespace'::findSupportedFormat': not all control paths return a value
   FallingSand3D.vcxproj -> C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\bin\Debug\FallingSand3D.exe

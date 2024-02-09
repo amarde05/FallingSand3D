@@ -22,7 +22,7 @@ namespace engine {
 		uint32_t transferFamily;
 		bool graphicsFamilyHasValue = false;
 		bool presentFamilyHasValue = false;
-		bool transferFamilyHasValue;
+		bool transferFamilyHasValue = false;
 		bool isComplete() { return graphicsFamilyHasValue && presentFamilyHasValue && transferFamilyHasValue; }
 	};
 
@@ -50,6 +50,7 @@ namespace engine {
 		VkQueue getTransferQueue() const { return mTransferQueue; }
 
 		DeviceProperties getDeviceProperties() const { return mDeviceProperties; }
+		QueueFamilyIndices getQueueFamilyIndices() const { return mQueueFamilyIndices; }
 
 		SwapchainSupportDetails getSwapchainSupport() const { return querySwapchainSupport(mPhysicalDevice); }
 		QueueFamilyIndices findPhysicalQueueFamilies() const { return findQueueFamilies(mPhysicalDevice); }
@@ -76,6 +77,7 @@ namespace engine {
 		VkQueue mTransferQueue;
 
 		DeviceProperties mDeviceProperties;
+		QueueFamilyIndices mQueueFamilyIndices;
 
 		void pickPhysicalDevice(VkInstance& instance);
 		void createLogicalDevice(const bool validationLayersEnabled, const std::vector<const char*>& validationLayers);

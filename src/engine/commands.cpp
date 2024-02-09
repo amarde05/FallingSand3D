@@ -3,10 +3,14 @@
 
 
 namespace engine {
-	VulkanCommandPool::VulkanCommandPool(uint32_t queueFamilyIndex, VkQueue& queue, VkDevice& device) : rQueue{ queue }, rDevice{ device } {
+	VulkanCommandPool::VulkanCommandPool(uint32_t queueFamilyIndex, VkQueue& queue, VkDevice& device, VkCommandPoolCreateFlags createFlags) : rQueue{ queue }, rDevice{ device } {
 		mQueueFamilyIndex = queueFamilyIndex;
 
-		createCommandPool();
+		createCommandPool(createFlags);
+	}
+
+	VulkanCommandPool::~VulkanCommandPool() {
+		vkDestroyCommandPool(rDevice, mCommandPool, nullptr);
 	}
 
 	void VulkanCommandPool::cleanup() {
@@ -46,7 +50,7 @@ namespace engine {
 		vkFreeCommandBuffers(rDevice, mCommandPool, 1, &commandBuffer);
 	}
 
-	void VulkanCommandPool::allocateBuffers(VkCommandBuffer* buffer, int count) const {
+	void VulkanCommandPool::allocateBuffers(VkCommandBuffer* buffers, int count) const {
 		VkCommandBufferAllocateInfo cmdAllocInfo{};
 		cmdAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		cmdAllocInfo.pNext = nullptr;
@@ -54,14 +58,15 @@ namespace engine {
 		cmdAllocInfo.commandBufferCount = count;
 		cmdAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
-		vkAllocateCommandBuffers(rDevice, &cmdAllocInfo, buffer);
+		vkAllocateCommandBuffers(rDevice, &cmdAllocInfo, buffers);
 	}
 
-	void VulkanCommandPool::createCommandPool() {
+	void VulkanCommandPool::createCommandPool(VkCommandPoolCreateFlags createFlags) {
 		VkCommandPoolCreateInfo poolInfo = {};
 		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		poolInfo.pNext = nullptr;
 		poolInfo.queueFamilyIndex = mQueueFamilyIndex;
-		poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		poolInfo.flags = createFlags;
 
 		if (vkCreateCommandPool(rDevice, &poolInfo, nullptr, &mCommandPool) != VK_SUCCESS) {
 			util::displayError("Failed to create command pool");

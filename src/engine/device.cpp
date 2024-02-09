@@ -11,14 +11,13 @@ namespace engine {
 		pickPhysicalDevice(instance);
 		createLogicalDevice(validationLayersEnabled, validationLayers);
 		
-		QueueFamilyIndices queueFamilyIndices = findPhysicalQueueFamilies();
-		mGraphicsPool = std::make_unique<VulkanCommandPool>(queueFamilyIndices.graphicsFamily, mGraphicsQueue, mDevice);
-		mTransferPool = std::make_unique<VulkanCommandPool>(queueFamilyIndices.transferFamily, mTransferQueue, mDevice);
+		mGraphicsPool = std::make_unique<VulkanCommandPool>(mQueueFamilyIndices.graphicsFamily, mGraphicsQueue, mDevice, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+		mTransferPool = std::make_unique<VulkanCommandPool>(mQueueFamilyIndices.transferFamily, mTransferQueue, mDevice, VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 	}
 
 	VulkanDevice::~VulkanDevice() {
-		mGraphicsPool->cleanup();
-		mTransferPool->cleanup();
+		mGraphicsPool = nullptr;
+		mTransferPool = nullptr;
 		vkDestroyDevice(mDevice, nullptr);
 	}
 
@@ -178,6 +177,7 @@ namespace engine {
 		if (candidates.rbegin()->first > 0) {
 			mPhysicalDevice = candidates.rbegin()->second;
 			mDeviceProperties.maxSamples = getMaxUsableSampleCount(mPhysicalDevice);
+			mQueueFamilyIndices = findPhysicalQueueFamilies();
 		}
 		else {
 			util::displayError("Could not select a physical device because failed to find a suitable GPU");

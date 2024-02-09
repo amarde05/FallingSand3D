@@ -5,7 +5,8 @@
 namespace engine {
 	class VulkanCommandPool {
 	public:
-		VulkanCommandPool(uint32_t queueFamilyIndex, VkQueue& queue, VkDevice& device);
+		VulkanCommandPool(uint32_t queueFamilyIndex, VkQueue& queue, VkDevice& device, VkCommandPoolCreateFlags createFlags);
+		~VulkanCommandPool();
 
 		VkCommandPool getPool() { return mCommandPool; }
 
@@ -21,6 +22,6 @@ namespace engine {
 		VkQueue& rQueue;
 		VkDevice& rDevice;
 
-		void createCommandPool();
+		void createCommandPool(VkCommandPoolCreateFlags createFlags);
 	};
 }
