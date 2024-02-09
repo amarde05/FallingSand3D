@@ -2,6 +2,7 @@
 #include "device.h"
 #include "descriptors.h"
 #include "commands.h"
+#include "deletion_queue.h"
 
 #include <vulkan/vulkan.h>
 
@@ -51,6 +52,8 @@ namespace engine {
 
 		const char* mApplicationName;
 
+		DeletionQueue mDeletionQueue;
+
 		// Vulkan objects
 		VkInstance mInstance;
 		VkDebugUtilsMessengerEXT mDebugMessenger;
@@ -66,6 +69,9 @@ namespace engine {
 		std::vector<VkFramebuffer> mSwapchainFramebuffers;
 
 		VkRenderPass mRenderPass;
+
+		VkPipelineLayout mTrianglePipelineLayout;
+		VkPipeline mTrianglePipeline;
 
 		std::unique_ptr<VulkanDescriptorPool> mGlobalPool;
 
@@ -90,11 +96,15 @@ namespace engine {
 
 		void createSyncStructures();
 
+		void createPipelines();
+
 		void createDescriptorSetLayout();
 
 		bool checkValidationLayerSupport() const;
 		bool checkInstanceExtensionSupport(std::vector<const char*>& extensions) const;
 		std::vector<const char*> getRequiredSDLExtensions() const;
+
+		bool loadShaderModule(const char* filePath, VkShaderModule* outShaderModule) const;
 
 		FrameData& getCurrentFrame() { return mFrames[mFrameNumber % FRAME_OVERLAP]; }
 	};

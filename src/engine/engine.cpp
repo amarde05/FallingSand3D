@@ -1,4 +1,5 @@
 #include "engine.h"
+#include "pipelines.h"
 #include "./util/debug.h"
 
 #include <SDL_vulkan.h>
@@ -7,6 +8,7 @@
 #include <thread>
 #include <algorithm>
 #include <array>
+#include <fstream>
 
 namespace {
 	VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -17,13 +19,13 @@ namespace {
 
 		switch (messageSeverity) {
 		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-			util::displayMessage(msg, WARN);
+			util::displayMessage(msg, DISPLAY_TYPE_WARN);
 			break;
 		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-			util::displayMessage(msg, ERR);
+			util::displayMessage(msg, DISPLAY_TYPE_ERR);
 			break;
 		default:
-			util::displayMessage(msg, INFO);
+			util::displayMessage(msg, DISPLAY_TYPE_NONE);
 			break;
 		}
 
@@ -174,22 +176,17 @@ namespace engine {
 
 		createSyncStructures();
 
+		createPipelines();
+
+		mDeletionQueue.pushFunction([=]() { cleanupSwapchain(); });
+
 		// Everything is initialized, so set mIsInitialized to true
 		mIsInitialized = true;
 	}
 
 	void VulkanEngine::cleanup() {
 		if (mIsInitialized) {
-			cleanupSwapchain();
-
-			vkDestroyRenderPass(mDevice->getDevice(), mRenderPass, nullptr);
-
-			for (int i = 0; i < FRAME_OVERLAP; i++) {
-				vkDestroyFence(mDevice->getDevice(), mFrames[i].renderFence, nullptr);
-
-				vkDestroySemaphore(mDevice->getDevice(), mFrames[i].presentSemaphore, nullptr);
-				vkDestroySemaphore(mDevice->getDevice(), mFrames[i].renderSemaphore, nullptr);
-			}
+			mDeletionQueue.flush();
 
 			mDevice = nullptr;
 
@@ -237,9 +234,8 @@ namespace engine {
 			util::displayError("Failed to begin command buffer");
 		}
 
-		// Make a clear color from frame number. This will flash with a 120*pi frame period
 		VkClearValue clearValue;
-		float flash = abs(sin(mFrameNumber / 120.0f));
+		float flash = abs(sin(mFrameNumber / 360.0f));
 		clearValue.color = { {0.0f, 0.0f, flash, 1.0f } };
 
 		// Start the main render pass
@@ -259,6 +255,9 @@ namespace engine {
 
 		// Begin the render pass
 		vkCmdBeginRenderPass(cmd, &renderpassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mTrianglePipeline);
+		vkCmdDraw(cmd, 3, 1, 0, 0);
 
 		// Finalize the render pass
 		vkCmdEndRenderPass(cmd);
@@ -576,6 +575,10 @@ namespace engine {
 		if (vkCreateRenderPass(mDevice->getDevice(), &renderPassInfo, nullptr, &mRenderPass) != VK_SUCCESS) {
 			util::displayError("Failed to create renderpass");
 		}
+
+		mDeletionQueue.pushFunction([=]() {
+			vkDestroyRenderPass(mDevice->getDevice(), mRenderPass, nullptr);
+		});
 	}
 
 	void VulkanEngine::createFramebuffers() {
@@ -632,7 +635,86 @@ namespace engine {
 				util::displayError("Failed to create render semaphore");
 			}
 		}
+
+		mDeletionQueue.pushFunction([=]() {
+			for (int i = 0; i < FRAME_OVERLAP; i++) {
+				vkDestroyFence(mDevice->getDevice(), mFrames[i].renderFence, nullptr);
+
+				vkDestroySemaphore(mDevice->getDevice(), mFrames[i].presentSemaphore, nullptr);
+				vkDestroySemaphore(mDevice->getDevice(), mFrames[i].renderSemaphore, nullptr);
+			}
+		});
 	}
+
+
+	void VulkanEngine::createPipelines() {
+		// Create shader modules
+		VkShaderModule triangleFragShader;
+		if (!loadShaderModule("../../shaders/tri.frag.spv", &triangleFragShader)) {
+			util::displayMessage("Failed to build the triangle fragment shader module", DISPLAY_TYPE_ERR);
+		}
+		else {
+			util::displayMessage("Triangle fragment shader successfully loaded", DISPLAY_TYPE_INFO);
+		}
+
+		VkShaderModule triangleVertexShader;
+		if (!loadShaderModule("../../shaders/tri.vert.spv", &triangleVertexShader)) {
+			util::displayMessage("Failed to build the triangle vertex shader module", DISPLAY_TYPE_ERR);
+		}
+		else {
+			util::displayMessage("Triangle vertex shader successfully loaded", DISPLAY_TYPE_INFO);
+		} 
+
+
+		// Create pipeline layout
+		VkPipelineLayoutCreateInfo pipelineLayoutInfo = PipelineBuilder::getPipelineLayoutCreateInfo();
+
+		if (vkCreatePipelineLayout(mDevice->getDevice(), &pipelineLayoutInfo, nullptr, &mTrianglePipelineLayout) != VK_SUCCESS) {
+			util::displayError("Failed to create pipeline layout");
+		}
+
+
+		// Create pipeline object
+		PipelineBuilder pipelineBuilder;
+
+		pipelineBuilder.shaderStages.push_back(PipelineBuilder::getPipelineShaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, triangleVertexShader));
+		pipelineBuilder.shaderStages.push_back(PipelineBuilder::getPipelineShaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, triangleFragShader));
+
+		pipelineBuilder.vertexInputInfo = PipelineBuilder::getVertexInputStateCreateInfo();
+
+		pipelineBuilder.inputAssembly = PipelineBuilder::getInputAssemblyCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+
+		// Build viewport and scissor
+		pipelineBuilder.viewport.x = 0.0f;
+		pipelineBuilder.viewport.y = 0.0f;
+		pipelineBuilder.viewport.width = (float)mWindowExtent.width;
+		pipelineBuilder.viewport.height = (float)mWindowExtent.height;
+		pipelineBuilder.viewport.minDepth = 0.0f;
+		pipelineBuilder.viewport.maxDepth = 1.0f;
+
+		pipelineBuilder.scissor.offset = { 0, 0 };
+		pipelineBuilder.scissor.extent = mWindowExtent;
+
+		pipelineBuilder.rasterizer = PipelineBuilder::getRasterizationStateCreateInfo(VK_POLYGON_MODE_FILL);
+
+		pipelineBuilder.multisampling = PipelineBuilder::getMultisamplingStateCreateInfo();
+
+		pipelineBuilder.colorBlendAttachment = PipelineBuilder::getColorBlendAttachmentState();
+
+		pipelineBuilder.pipelineLayout = mTrianglePipelineLayout;
+
+		mTrianglePipeline = pipelineBuilder.buildPipeline(mDevice->getDevice(), mRenderPass);
+		
+		vkDestroyShaderModule(mDevice->getDevice(), triangleFragShader, nullptr);
+		vkDestroyShaderModule(mDevice->getDevice(), triangleVertexShader, nullptr);
+
+		mDeletionQueue.pushFunction([&]() {
+			vkDestroyPipeline(mDevice->getDevice(), mTrianglePipeline, nullptr);
+			
+			vkDestroyPipelineLayout(mDevice->getDevice(), mTrianglePipelineLayout, nullptr);
+		});
+	}
+
 
 	void VulkanEngine::createDescriptorSetLayout() {
 		VkDescriptorSetLayoutBinding uboLayoutBinding{};
@@ -724,6 +806,50 @@ namespace engine {
 		return requiredExtensions;
 	}
 	
+	bool VulkanEngine::loadShaderModule(const char* filePath, VkShaderModule* outShaderModule) const {
+		// Open the file in binary with the cursor at the end
+		std::ifstream file(filePath, std::ios::ate | std::ios::binary);
+
+		if (!file.is_open()) {
+			return false;
+		}
+
+		// Find the size of the file by looking up the location of the cursor
+		// Since the cursor starts at the end, it gives the size directly in bytes
+		size_t fileSize = (size_t)file.tellg();
+
+		// Spirv expects the buffer to be on uint32
+		std::vector<uint32_t> buffer(fileSize / sizeof(uint32_t));
+
+		// Put file cursor at beginning
+		file.seekg(0);
+
+		// Load entire file into the buffer
+		file.read((char*)buffer.data(), fileSize);
+
+		file.close();
+
+
+		// Now create shader module
+		VkShaderModuleCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		createInfo.pNext = nullptr;
+
+		createInfo.codeSize = buffer.size() * sizeof(uint32_t);
+		createInfo.pCode = buffer.data();
+
+		VkShaderModule shaderModule;
+
+		if (vkCreateShaderModule(mDevice->getDevice(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+			return false;
+		}
+
+		*outShaderModule = shaderModule;
+
+		return true;
+	}
+
+
 	void VulkanEngine::cleanupSwapchain() {
 		for (auto framebuffer : mSwapchainFramebuffers) {
 			vkDestroyFramebuffer(mDevice->getDevice(), framebuffer, nullptr);

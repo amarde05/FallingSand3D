@@ -1,3 +1,31 @@
+^C:\USERS\ANTONIO\DOCUMENTS\CELLULAR AUTOMATA\FALLINGSAND3D\BIN\CMAKEFILES\67A54562BB0FBF86FA01873CD4C709E3\TRI.FRAG.SPV.RULE
+setlocal
+C:\VulkanSDK\1.3.250.1\Bin\glslangValidator.exe -V "C:/Users/Antonio/Documents/Cellular Automata/FallingSand3D/shaders/tri.frag" -o "C:/Users/Antonio/Documents/Cellular Automata/FallingSand3D/shaders/tri.frag.spv"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\ANTONIO\DOCUMENTS\CELLULAR AUTOMATA\FALLINGSAND3D\BIN\CMAKEFILES\67A54562BB0FBF86FA01873CD4C709E3\TRI.VERT.SPV.RULE
+setlocal
+C:\VulkanSDK\1.3.250.1\Bin\glslangValidator.exe -V "C:/Users/Antonio/Documents/Cellular Automata/FallingSand3D/shaders/tri.vert" -o "C:/Users/Antonio/Documents/Cellular Automata/FallingSand3D/shaders/tri.vert.spv"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\ANTONIO\DOCUMENTS\CELLULAR AUTOMATA\FALLINGSAND3D\BIN\CMAKEFILES\956169B3593C328E6F5B3378C1FCA0E7\SHADERS.RULE
+setlocal
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
 ^C:\USERS\ANTONIO\DOCUMENTS\CELLULAR AUTOMATA\FALLINGSAND3D\CMAKELISTS.TXT
 setlocal
 "C:\Program Files\CMake\bin\cmake.exe" "-SC:/Users/Antonio/Documents/Cellular Automata/FallingSand3D" "-BC:/Users/Antonio/Documents/Cellular Automata/FallingSand3D/bin" --check-stamp-file "C:/Users/Antonio/Documents/Cellular Automata/FallingSand3D/bin/CMakeFiles/generate.stamp"

@@ -1,8 +1,23 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <CustomBuild Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\bin\CMakeFiles\67a54562bb0fbf86fa01873cd4c709e3\tri.frag.spv.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\bin\CMakeFiles\67a54562bb0fbf86fa01873cd4c709e3\tri.vert.spv.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\bin\CMakeFiles\956169b3593c328e6f5b3378c1fca0e7\Shaders.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
     <CustomBuild Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\bin\CMakeFiles\Shaders" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{C1FB648D-0C0D-3D6D-86B1-EEE6EB56F06B}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

@@ -331,12 +331,20 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <ItemGroup>
     <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\commands.cpp" />
     <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\commands.h" />
+    <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\deletion_queue.cpp" />
+    <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\deletion_queue.h" />
     <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\descriptors.cpp" />
     <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\descriptors.h" />
     <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\device.cpp" />
     <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\device.h" />
     <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\engine.cpp" />
     <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\engine.h" />
+    <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\pipelines.cpp" />
+    <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\pipelines.h" />
+    <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\renderer.cpp" />
+    <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\renderer.h" />
+    <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\window.cpp" />
+    <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\window.h" />
     <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\main.cpp" />
     <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\util\debug.cpp" />
     <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\util\debug.h" />

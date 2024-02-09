@@ -2,9 +2,10 @@
 
 #include <string>
 
-#define INFO 0
-#define WARN 1
-#define ERR 2
+#define DISPLAY_TYPE_INFO 0
+#define DISPLAY_TYPE_WARN 1
+#define DISPLAY_TYPE_ERR 2
+#define DISPLAY_TYPE_NONE 3
 
 namespace util {
 	void displayMessage(std::string msg, int type);
