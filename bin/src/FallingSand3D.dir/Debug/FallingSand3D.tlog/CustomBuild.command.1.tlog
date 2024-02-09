@@ -1,0 +1,10 @@
+^C:\USERS\ANTONIO\DOCUMENTS\CELLULAR AUTOMATA\FALLINGSAND3D\SRC\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/Users/Antonio/Documents/Cellular Automata/FallingSand3D" "-BC:/Users/Antonio/Documents/Cellular Automata/FallingSand3D/bin" --check-stamp-file "C:/Users/Antonio/Documents/Cellular Automata/FallingSand3D/bin/src/CMakeFiles/generate.stamp"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

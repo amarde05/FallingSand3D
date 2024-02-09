@@ -1,0 +1,10 @@
+^C:\USERS\ANTONIO\DOCUMENTS\CELLULAR AUTOMATA\FALLINGSAND3D\BIN\CMAKEFILES\956169B3593C328E6F5B3378C1FCA0E7\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/Users/Antonio/Documents/Cellular Automata/FallingSand3D" "-BC:/Users/Antonio/Documents/Cellular Automata/FallingSand3D/bin" --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file "C:/Users/Antonio/Documents/Cellular Automata/FallingSand3D/bin/FallingSand3D.sln"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

@@ -1,0 +1,4 @@
+﻿  device.cpp
+C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\device.cpp(53): warning C4715: 'engine::VulkanDevice::findSupportedFormat': not all control paths return a value
+C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\device.cpp(37): warning C4715: 'engine::VulkanDevice::findMemoryType': not all control paths return a value
+  FallingSand3D.vcxproj -> C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\bin\Debug\FallingSand3D.exe

@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\commands.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\descriptors.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\device.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\engine.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\main.cpp" />
+    <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\util\debug.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\commands.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\descriptors.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\device.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\engine.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\util\debug.h">
+      <Filter>util</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="engine">
+      <UniqueIdentifier>{49462391-D522-358A-9F00-CBE83A77F780}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="util">
+      <UniqueIdentifier>{276F9E6C-0868-3EE6-932A-B6FE611A9D2D}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
