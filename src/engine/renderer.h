@@ -1,5 +1,6 @@
 #pragma once
 
+#include "window.h"
 #include "device.h"
 #include "descriptors.h"
 #include "commands.h"
@@ -30,16 +31,20 @@ namespace engine {
 
 	class Renderer {
 	public:
-		Renderer();
+		Renderer(Window* window);
 
 		void init(VkApplicationInfo appInfo);
 
 		void cleanup();
 
 		void draw();
+
+		void waitForGraphics();
 	private:
 		bool mStopRendering{ false };
 		int mFrameNumber{ 0 };
+
+		Window* mWindow;
 
 		DeletionQueue mDeletionQueue;
 
@@ -91,7 +96,6 @@ namespace engine {
 
 		bool checkValidationLayerSupport() const;
 		bool checkInstanceExtensionSupport(std::vector<const char*>& extensions) const;
-		std::vector<const char*> getRequiredSDLExtensions() const;
 
 		bool loadShaderModule(const char* filePath, VkShaderModule* outShaderModule) const;
 
