@@ -1,6 +1,7 @@
 #pragma once
+
 #include "window.h"
-#include "renderer.h"
+#include "rendering/renderer.h"
 
 #include <vulkan/vulkan.h>
 
@@ -30,6 +31,6 @@ namespace engine {
 		const char* mApplicationName;
 
 		Window mWindow;
-		Renderer mRenderer;
+		rendering::Renderer mRenderer;
 	};
 }

@@ -1,3 +1,5 @@
+#define VMA_IMPLEMENTATION
+
 #include "engine/engine.h"
 #include "util/debug.h"
 

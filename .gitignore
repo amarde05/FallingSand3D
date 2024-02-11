@@ -33,3 +33,7 @@
 
 # Visual Studio stinkies
 *.opendb
+*.ipch
+*.vsidx
+*.log
+*.tlog

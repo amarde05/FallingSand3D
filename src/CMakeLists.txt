@@ -17,7 +17,7 @@ endforeach()
 set_property(TARGET FallingSand3D PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:FallingSand3D>")
 
 target_include_directories(FallingSand3D PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(FallingSand3D glm tinyobjloader imgui stb_image)
+target_link_libraries(FallingSand3D vma glm tinyobjloader imgui stb_image)
 
 target_link_libraries(FallingSand3D Vulkan::Vulkan sdl2)
 

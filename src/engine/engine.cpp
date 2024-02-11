@@ -13,7 +13,7 @@ namespace engine {
 		return *loadedEngine;
 	}
 
-	VulkanEngine::VulkanEngine(const char* name) : mApplicationName{ name }, mRenderer{ Renderer(&mWindow) }, mWindow{ Window() } {
+	VulkanEngine::VulkanEngine(const char* name) : mApplicationName{ name }, mRenderer{ rendering::Renderer(&mWindow) }, mWindow{ Window() } {
 	}
 
 	void VulkanEngine::init() {
