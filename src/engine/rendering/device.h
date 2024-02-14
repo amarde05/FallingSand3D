@@ -29,6 +29,7 @@ namespace engine {
 
 		struct DeviceProperties {
 			VkSampleCountFlagBits maxSamples;
+			VkPhysicalDeviceProperties gpuProperties;
 		};
 
 		class VulkanDevice {

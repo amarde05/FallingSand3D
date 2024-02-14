@@ -18,6 +18,8 @@
 
 #include <vector>
 #include <memory>
+#include <unordered_map>
+#include <string>
 
 namespace engine {
 	namespace rendering {
@@ -34,11 +36,42 @@ namespace engine {
 
 			VkFence renderFence;
 			VkSemaphore presentSemaphore, renderSemaphore;
+
+			AllocatedBuffer cameraBuffer;
+
+			VkDescriptorSet globalDescriptor;
+		};
+
+		struct GPUCameraData {
+			glm::mat4 view;
+			glm::mat4 proj;
+			glm::mat4 viewproj;
+		};
+
+		struct GPUSceneData {
+			glm::vec4 fogColor; // w is for exponent
+			glm::vec4 fogDistances; // x for min, y for max, zw unused
+			glm::vec4 ambientColor;
+			glm::vec4 sunlightDirection; // w for sun power
+			glm::vec4 sunlightColor;
 		};
 
 		struct MeshPushConstants {
 			glm::vec4 data;
 			glm::mat4 renderMatrix;
+		};
+
+		struct Material {
+			VkPipeline pipeline;
+			VkPipelineLayout pipelineLayout;
+		};
+
+		struct RenderObject {
+			Mesh* mesh;
+
+			Material* material;
+
+			glm::mat4 transformMatrix;
 		};
 
 		class Renderer {
@@ -57,8 +90,6 @@ namespace engine {
 			int mFrameNumber{ 0 };
 
 			Window* mWindow;
-
-			
 
 			// Vulkan objects
 			VkInstance mInstance;
@@ -80,14 +111,14 @@ namespace engine {
 			VkPipeline mTrianglePipeline;
 
 			Mesh mMesh;
+			Mesh mTriangleMesh;
 
 			VkImageView mDepthImageView;
 			AllocatedImage mDepthImage;
 			VkFormat mDepthFormat;
 
-			std::unique_ptr<VulkanDescriptorPool> mGlobalPool;
-
-			VkDescriptorSetLayout mDescriptorSetLayout;
+			VkDescriptorSetLayout mGlobalSetLayout;
+			VkDescriptorPool mDescriptorPool;
 
 			FrameData mFrames[FRAME_OVERLAP];
 
@@ -95,6 +126,16 @@ namespace engine {
 			
 			DeletionQueue mMainDeletionQueue;
 			DeletionQueue mAllocationDeletionQueue;
+
+			std::vector<RenderObject> mRenderables;
+
+			std::unordered_map<std::string, Material> mMaterials;
+			std::unordered_map<std::string, Mesh> mMeshes;
+
+			glm::vec3 camPos {0, -6, -10};
+
+			GPUSceneData mSceneParameters;
+			AllocatedBuffer mSceneParameterBuffer;
 
 
 			void createInstance(VkApplicationInfo appInfo);
@@ -114,17 +155,31 @@ namespace engine {
 
 			void createSyncStructures();
 
+			void initDescriptors();
 			void createPipelines();
 
 			void loadMeshes();
 
-			void createDescriptorSetLayout();
+			void initScene();
+
+
+			void drawObjects(VkCommandBuffer cmd, RenderObject* first, int count);
+
 
 			bool checkValidationLayerSupport() const;
 			bool checkInstanceExtensionSupport(std::vector<const char*>& extensions) const;
 
+			size_t padUniformBufferSize(size_t originalSize) const;
+
 			bool loadShaderModule(const char* filePath, VkShaderModule* outShaderModule) const;
+			
 			void uploadMesh(Mesh& mesh);
+			Mesh* getMesh(const std::string& name);
+
+			Material* createMaterial(VkPipeline pipeline, VkPipelineLayout layout, const std::string& name);
+			Material* getMaterial(const std::string& name);
+
+			AllocatedBuffer createBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
 
 
 			FrameData& getCurrentFrame() { return mFrames[mFrameNumber % FRAME_OVERLAP]; }

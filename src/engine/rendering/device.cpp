@@ -178,6 +178,9 @@ namespace engine {
 			if (candidates.rbegin()->first > 0) {
 				mPhysicalDevice = candidates.rbegin()->second;
 				mDeviceProperties.maxSamples = getMaxUsableSampleCount(mPhysicalDevice);
+				
+				vkGetPhysicalDeviceProperties(mPhysicalDevice, &mDeviceProperties.gpuProperties);
+
 				mQueueFamilyIndices = findPhysicalQueueFamilies();
 			}
 			else {

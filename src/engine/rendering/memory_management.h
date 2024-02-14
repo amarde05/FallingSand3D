@@ -15,5 +15,7 @@ namespace engine {
 			VkImage image;
 			VmaAllocation allocation;
 		};
+
+
 	}
 }

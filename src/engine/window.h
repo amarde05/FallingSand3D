@@ -9,6 +9,13 @@
 namespace engine {
 	class Window {
 	public:
+		bool holdingW{ false };
+		bool holdingA{ false };
+		bool holdingS{ false };
+		bool holdingD{ false };
+		bool holdingCTRL{ false };
+		bool holdingSpace{ false };
+
 		Window();
 
 		void init(const char* appName);

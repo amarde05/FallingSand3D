@@ -1,6 +1,11 @@
 ﻿  renderer.cpp
-C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\renderer.cpp(520,61): warning C4267: 'initializing': conversion from 'size_t' to 'uint32_t', possible loss of data
-C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\renderer.cpp(520,38): warning C4267: 'initializing': conversion from 'size_t' to 'const uint32_t', possible loss of data
-C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\renderer.cpp(524,21): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\renderer.cpp(119): warning C4715: '`anonymous namespace'::findSupportedFormat': not all control paths return a value
+C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\renderer.cpp(248,59): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\renderer.cpp(380,29): warning C4267: 'initializing': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\renderer.cpp(399,46): warning C4267: 'argument': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\renderer.cpp(706,62): warning C4267: 'initializing': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\renderer.cpp(706,39): warning C4267: 'initializing': conversion from 'size_t' to 'const uint32_t', possible loss of data
+C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\renderer.cpp(710,22): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\renderer.cpp(942,81): warning C4267: '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\renderer.cpp(945,77): warning C4267: '=': conversion from 'size_t' to 'uint32_t', possible loss of data
+C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\renderer.cpp(121): warning C4715: '`anonymous namespace'::findSupportedFormat': not all control paths return a value
   FallingSand3D.vcxproj -> C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\bin\Debug\FallingSand3D.exe

@@ -40,6 +40,50 @@ namespace engine {
 					minimized = false;
 				}
 			}
+			else if (e.type == SDL_KEYDOWN) {
+				switch (e.key.keysym.scancode) {
+				case SDL_SCANCODE_W:
+					holdingW = true;
+					break;
+				case SDL_SCANCODE_A:
+					holdingA = true;
+					break;
+				case SDL_SCANCODE_S:
+					holdingS = true;
+					break;
+				case SDL_SCANCODE_D:
+					holdingD = true;
+					break;
+				case SDL_SCANCODE_LCTRL:
+					holdingCTRL = true;
+					break;
+				case SDL_SCANCODE_SPACE:
+					holdingSpace = true;
+					break;
+				}
+			}
+			else if (e.type == SDL_KEYUP) {
+				switch (e.key.keysym.scancode) {
+				case SDL_SCANCODE_W:
+					holdingW = false;
+					break;
+				case SDL_SCANCODE_A:
+					holdingA = false;
+					break;
+				case SDL_SCANCODE_S:
+					holdingS = false;
+					break;
+				case SDL_SCANCODE_D:
+					holdingD = false;
+					break;
+				case SDL_SCANCODE_LCTRL:
+					holdingCTRL = false;
+					break;
+				case SDL_SCANCODE_SPACE:
+					holdingSpace = false;
+					break;
+				}
+			}
 		}
 	}
 
