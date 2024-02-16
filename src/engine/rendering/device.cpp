@@ -199,6 +199,8 @@ namespace engine {
 			for (uint32_t queueFamily : uniqueQueueFamilies) {
 				VkDeviceQueueCreateInfo queueCreateInfo{};
 				queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+				queueCreateInfo.pNext = nullptr;
+
 				queueCreateInfo.queueFamilyIndex = indices.graphicsFamily;
 				queueCreateInfo.queueCount = 1;
 				queueCreateInfo.pQueuePriorities = &queuePriority;
@@ -209,8 +211,15 @@ namespace engine {
 			deviceFeatures.samplerAnisotropy = VK_TRUE;
 			deviceFeatures.sampleRateShading = VK_TRUE;
 
+			VkPhysicalDeviceShaderDrawParameterFeatures shaderDrawParametersFeatures{};
+			shaderDrawParametersFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES;
+			shaderDrawParametersFeatures.pNext = nullptr;
+			shaderDrawParametersFeatures.shaderDrawParameters = VK_TRUE;
+
 			VkDeviceCreateInfo createInfo{};
 			createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+			createInfo.pNext = &shaderDrawParametersFeatures;
+
 			createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 			createInfo.pQueueCreateInfos = queueCreateInfos.data();
 

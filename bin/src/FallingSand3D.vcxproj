@@ -347,6 +347,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\pipelines.h" />
     <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\renderer.cpp" />
     <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\renderer.h" />
+    <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\tools\initializers.cpp" />
+    <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\tools\initializers.h" />
     <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\window.cpp" />
     <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\window.h" />
     <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\main.cpp" />

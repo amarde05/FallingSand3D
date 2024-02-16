@@ -37,9 +37,8 @@ namespace engine {
 			VkFence renderFence;
 			VkSemaphore presentSemaphore, renderSemaphore;
 
-			AllocatedBuffer cameraBuffer;
-
-			VkDescriptorSet globalDescriptor;
+			AllocatedBuffer objectBuffer;
+			VkDescriptorSet objectDescriptor;
 		};
 
 		struct GPUCameraData {
@@ -54,6 +53,10 @@ namespace engine {
 			glm::vec4 ambientColor;
 			glm::vec4 sunlightDirection; // w for sun power
 			glm::vec4 sunlightColor;
+		};
+
+		struct GPUObjectData {
+			glm::mat4 modelMatrix;
 		};
 
 		struct MeshPushConstants {
@@ -112,13 +115,17 @@ namespace engine {
 
 			Mesh mMesh;
 			Mesh mTriangleMesh;
+			Mesh mTeapotMesh;
 
 			VkImageView mDepthImageView;
 			AllocatedImage mDepthImage;
 			VkFormat mDepthFormat;
 
 			VkDescriptorSetLayout mGlobalSetLayout;
+			VkDescriptorSetLayout mObjectSetLayout;
 			VkDescriptorPool mDescriptorPool;
+
+			VkDescriptorSet mGlobalDescriptor;
 
 			FrameData mFrames[FRAME_OVERLAP];
 
@@ -135,7 +142,7 @@ namespace engine {
 			glm::vec3 camPos {0, -6, -10};
 
 			GPUSceneData mSceneParameters;
-			AllocatedBuffer mSceneParameterBuffer;
+			AllocatedBuffer mGlobalBuffer;
 
 
 			void createInstance(VkApplicationInfo appInfo);

@@ -28,6 +28,9 @@
     <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\renderer.cpp">
       <Filter>engine\rendering</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\tools\initializers.cpp">
+      <Filter>engine\rendering\tools</Filter>
+    </ClCompile>
     <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\window.cpp">
       <Filter>engine</Filter>
     </ClCompile>
@@ -64,6 +67,9 @@
     <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\renderer.h">
       <Filter>engine\rendering</Filter>
     </ClInclude>
+    <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\tools\initializers.h">
+      <Filter>engine\rendering\tools</Filter>
+    </ClInclude>
     <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\window.h">
       <Filter>engine</Filter>
     </ClInclude>
@@ -80,6 +86,9 @@
     </Filter>
     <Filter Include="engine\rendering">
       <UniqueIdentifier>{FE30409A-D1FC-30AC-8290-AE9E585E97FF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="engine\rendering\tools">
+      <UniqueIdentifier>{A0DB6741-3441-3683-8563-A7EB39D30086}</UniqueIdentifier>
     </Filter>
     <Filter Include="util">
       <UniqueIdentifier>{276F9E6C-0868-3EE6-932A-B6FE611A9D2D}</UniqueIdentifier>

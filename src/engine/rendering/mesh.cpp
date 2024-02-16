@@ -82,7 +82,7 @@ namespace engine {
 					for (size_t v = 0; v < fv; v++) {
 						tinyobj::index_t idx = shapes[s].mesh.indices[indexOffset + v];
 
-						Vertex newVert;
+						Vertex newVert{};
 
 						tinyobj::real_t vx = attrib.vertices[3 * idx.vertex_index + 0];
 						tinyobj::real_t vy = attrib.vertices[3 * idx.vertex_index + 1];
