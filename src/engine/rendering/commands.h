@@ -16,6 +16,8 @@ namespace engine {
 
 			void allocateBuffers(VkCommandBuffer* buffer, int count) const;
 
+			void reset();
+
 			void cleanup();
 		private:
 			VkCommandPool mCommandPool;

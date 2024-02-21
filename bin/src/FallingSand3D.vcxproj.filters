@@ -28,6 +28,9 @@
     <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\renderer.cpp">
       <Filter>engine\rendering</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\textures.cpp">
+      <Filter>engine\rendering</Filter>
+    </ClCompile>
     <ClCompile Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\tools\initializers.cpp">
       <Filter>engine\rendering\tools</Filter>
     </ClCompile>
@@ -65,6 +68,9 @@
       <Filter>engine\rendering</Filter>
     </ClInclude>
     <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\renderer.h">
+      <Filter>engine\rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\textures.h">
       <Filter>engine\rendering</Filter>
     </ClInclude>
     <ClInclude Include="C:\Users\Antonio\Documents\Cellular Automata\FallingSand3D\src\engine\rendering\tools\initializers.h">

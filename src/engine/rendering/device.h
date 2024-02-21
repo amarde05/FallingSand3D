@@ -11,6 +11,10 @@ namespace engine {
 	namespace rendering {
 		const std::vector<const char*> DEVICE_EXTENSIONS = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
+#define QUEUE_TYPE_GRAPHICS 0
+#define QUEUE_TYPE_TRANSFER 1
+#define QUEUE_TYPE_COMPUTE 2
+
 		struct SwapchainSupportDetails {
 			VkSurfaceCapabilitiesKHR capabilities;
 			std::vector<VkSurfaceFormatKHR> formats;
@@ -59,6 +63,8 @@ namespace engine {
 
 			uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 			VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) const;
+
+			std::unique_ptr<VulkanCommandPool> createCommandPool(int queueType, VkCommandPoolCreateFlags flags);
 
 			void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) const;
 			void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) const;

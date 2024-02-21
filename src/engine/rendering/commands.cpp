@@ -1,5 +1,6 @@
 #include "commands.h"
 #include "../../util/debug.h"
+#include "tools/initializers.h"
 
 
 namespace engine {
@@ -40,10 +41,7 @@ namespace engine {
 		void VulkanCommandPool::endSingleTimeCommands(VkCommandBuffer commandBuffer) const {
 			vkEndCommandBuffer(commandBuffer);
 
-			VkSubmitInfo submitInfo{};
-			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-			submitInfo.commandBufferCount = 1;
-			submitInfo.pCommandBuffers = &commandBuffer;
+			VkSubmitInfo submitInfo = tools::createSubmitInfo(&commandBuffer);
 
 			vkQueueSubmit(rQueue, 1, &submitInfo, VK_NULL_HANDLE);
 			vkQueueWaitIdle(rQueue);
@@ -63,15 +61,15 @@ namespace engine {
 		}
 
 		void VulkanCommandPool::createCommandPool(VkCommandPoolCreateFlags createFlags) {
-			VkCommandPoolCreateInfo poolInfo = {};
-			poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-			poolInfo.pNext = nullptr;
-			poolInfo.queueFamilyIndex = mQueueFamilyIndex;
-			poolInfo.flags = createFlags;
+			VkCommandPoolCreateInfo poolInfo = tools::createCommandPoolInfo(mQueueFamilyIndex, createFlags);
 
 			if (vkCreateCommandPool(rDevice, &poolInfo, nullptr, &mCommandPool) != VK_SUCCESS) {
 				util::displayError("Failed to create command pool");
 			}
+		}
+
+		void VulkanCommandPool::reset() {
+			vkResetCommandPool(rDevice, mCommandPool, 0);
 		}
 	}
 }

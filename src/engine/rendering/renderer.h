@@ -65,6 +65,7 @@ namespace engine {
 		};
 
 		struct Material {
+			VkDescriptorSet textureSet{ VK_NULL_HANDLE };
 			VkPipeline pipeline;
 			VkPipelineLayout pipelineLayout;
 		};
@@ -75,6 +76,17 @@ namespace engine {
 			Material* material;
 
 			glm::mat4 transformMatrix;
+		};
+
+		struct UploadContext {
+			VkFence uploadFence;
+			std::unique_ptr<VulkanCommandPool> commandPool;
+			VkCommandBuffer commandBuffer;
+		};
+
+		struct Texture {
+			AllocatedImage image;
+			VkImageView imageView;
 		};
 
 		class Renderer {
@@ -88,6 +100,16 @@ namespace engine {
 			void draw();
 
 			void waitForGraphics();
+			
+
+			AllocatedBuffer createBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
+		
+			void immediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
+
+			VmaAllocator getAllocator() const { return mAllocator; }
+
+			DeletionQueue& getMainDeletionQueue() { return mMainDeletionQueue; }
+			DeletionQueue& getAllocationDeletionQueue() { return mAllocationDeletionQueue; }
 		private:
 			bool mStopRendering{ false };
 			int mFrameNumber{ 0 };
@@ -116,6 +138,7 @@ namespace engine {
 			Mesh mMesh;
 			Mesh mTriangleMesh;
 			Mesh mTeapotMesh;
+			Mesh mVikingRoom;
 
 			VkImageView mDepthImageView;
 			AllocatedImage mDepthImage;
@@ -123,6 +146,7 @@ namespace engine {
 
 			VkDescriptorSetLayout mGlobalSetLayout;
 			VkDescriptorSetLayout mObjectSetLayout;
+			VkDescriptorSetLayout mSingleTextureLayout;
 			VkDescriptorPool mDescriptorPool;
 
 			VkDescriptorSet mGlobalDescriptor;
@@ -144,6 +168,10 @@ namespace engine {
 			GPUSceneData mSceneParameters;
 			AllocatedBuffer mGlobalBuffer;
 
+			UploadContext mUploadContext;
+
+			std::unordered_map<std::string, Texture> mLoadedTextures;
+
 
 			void createInstance(VkApplicationInfo appInfo);
 			void setupDebugMessenger();
@@ -155,7 +183,7 @@ namespace engine {
 			void createSwapchainImageViews();
 			void cleanupSwapchain();
 
-			void allocateCommandBuffers();
+			void initCommands();
 
 			void createRenderPass();
 			void createFramebuffers();
@@ -166,6 +194,8 @@ namespace engine {
 			void createPipelines();
 
 			void loadMeshes();
+
+			void loadTextures();
 
 			void initScene();
 
@@ -185,9 +215,6 @@ namespace engine {
 
 			Material* createMaterial(VkPipeline pipeline, VkPipelineLayout layout, const std::string& name);
 			Material* getMaterial(const std::string& name);
-
-			AllocatedBuffer createBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
-
 
 			FrameData& getCurrentFrame() { return mFrames[mFrameNumber % FRAME_OVERLAP]; }
 		};

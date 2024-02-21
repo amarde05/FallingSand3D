@@ -1,5 +1,6 @@
 #include "renderer.h"
 #include "pipelines.h"
+#include "textures.h"
 #include "tools/initializers.h"
 #include "../../util/debug.h"
 
@@ -130,6 +131,266 @@ namespace {
 
 namespace engine {
 	namespace rendering {
+
+		glm::vec4 colors[] = {
+{ 0.25f, 0.00f, 0.00f, 1.0f },
+{ 0.25f, 0.00f, 0.00f, 1.0f },
+{ 0.25f, 0.04f, 0.00f, 1.0f },
+{ 0.14f, 0.25f, 0.00f, 1.0f },
+{ 0.00f, 0.25f, 0.00f, 1.0f },
+{ 0.00f, 0.25f, 0.00f, 1.0f },
+{ 0.00f, 0.25f, 0.00f, 1.0f },
+{ 0.00f, 0.05f, 0.25f, 1.0f },
+{ 0.00f, 0.00f, 0.25f, 1.0f },
+{ 0.00f, 0.00f, 0.25f, 1.0f },
+{ 0.00f, 0.00f, 0.25f, 1.0f },
+{ 0.00f, 0.00f, 0.25f, 1.0f },
+{ 0.16f, 0.00f, 0.25f, 1.0f },
+{ 0.25f, 0.00f, 0.01f, 1.0f },
+{ 0.25f, 0.00f, 0.00f, 1.0f },
+{ 0.00f, 0.00f, 0.00f, 1.0f },
+{ 0.33f, 0.00f, 0.00f, 1.0f },
+{ 0.33f, 0.00f, 0.00f, 1.0f },
+{ 0.33f, 0.11f, 0.00f, 1.0f },
+{ 0.22f, 0.33f, 0.00f, 1.0f },
+{ 0.00f, 0.33f, 0.00f, 1.0f },
+{ 0.00f, 0.33f, 0.00f, 1.0f },
+{ 0.00f, 0.33f, 0.01f, 1.0f },
+{ 0.00f, 0.13f, 0.33f, 1.0f },
+{ 0.00f, 0.00f, 0.33f, 1.0f },
+{ 0.00f, 0.00f, 0.33f, 1.0f },
+{ 0.00f, 0.00f, 0.33f, 1.0f },
+{ 0.00f, 0.00f, 0.33f, 1.0f },
+{ 0.24f, 0.00f, 0.33f, 1.0f },
+{ 0.33f, 0.00f, 0.09f, 1.0f },
+{ 0.33f, 0.00f, 0.00f, 1.0f },
+{ 0.05f, 0.05f, 0.05f, 1.0f },
+{ 0.41f, 0.00f, 0.00f, 1.0f },
+{ 0.41f, 0.00f, 0.00f, 1.0f },
+{ 0.41f, 0.19f, 0.00f, 1.0f },
+{ 0.29f, 0.41f, 0.00f, 1.0f },
+{ 0.00f, 0.41f, 0.00f, 1.0f },
+{ 0.00f, 0.41f, 0.00f, 1.0f },
+{ 0.00f, 0.41f, 0.09f, 1.0f },
+{ 0.00f, 0.21f, 0.41f, 1.0f },
+{ 0.00f, 0.07f, 0.41f, 1.0f },
+{ 0.00f, 0.00f, 0.41f, 1.0f },
+{ 0.00f, 0.00f, 0.41f, 1.0f },
+{ 0.00f, 0.00f, 0.41f, 1.0f },
+{ 0.31f, 0.00f, 0.41f, 1.0f },
+{ 0.41f, 0.00f, 0.17f, 1.0f },
+{ 0.41f, 0.00f, 0.00f, 1.0f },
+{ 0.13f, 0.13f, 0.13f, 1.0f },
+{ 0.49f, 0.00f, 0.00f, 1.0f },
+{ 0.49f, 0.00f, 0.00f, 1.0f },
+{ 0.49f, 0.27f, 0.00f, 1.0f },
+{ 0.37f, 0.49f, 0.00f, 1.0f },
+{ 0.04f, 0.49f, 0.00f, 1.0f },
+{ 0.00f, 0.49f, 0.00f, 1.0f },
+{ 0.00f, 0.49f, 0.16f, 1.0f },
+{ 0.00f, 0.29f, 0.49f, 1.0f },
+{ 0.00f, 0.15f, 0.49f, 1.0f },
+{ 0.00f, 0.00f, 0.49f, 1.0f },
+{ 0.00f, 0.00f, 0.49f, 1.0f },
+{ 0.06f, 0.00f, 0.49f, 1.0f },
+{ 0.39f, 0.00f, 0.49f, 1.0f },
+{ 0.49f, 0.00f, 0.25f, 1.0f },
+{ 0.49f, 0.00f, 0.00f, 1.0f },
+{ 0.21f, 0.21f, 0.21f, 1.0f },
+{ 0.56f, 0.00f, 0.00f, 1.0f },
+{ 0.56f, 0.02f, 0.00f, 1.0f },
+{ 0.56f, 0.35f, 0.00f, 1.0f },
+{ 0.45f, 0.56f, 0.00f, 1.0f },
+{ 0.12f, 0.56f, 0.00f, 1.0f },
+{ 0.00f, 0.56f, 0.00f, 1.0f },
+{ 0.00f, 0.56f, 0.24f, 1.0f },
+{ 0.00f, 0.36f, 0.56f, 1.0f },
+{ 0.00f, 0.22f, 0.56f, 1.0f },
+{ 0.00f, 0.00f, 0.56f, 1.0f },
+{ 0.00f, 0.00f, 0.56f, 1.0f },
+{ 0.14f, 0.00f, 0.56f, 1.0f },
+{ 0.47f, 0.00f, 0.56f, 1.0f },
+{ 0.56f, 0.00f, 0.33f, 1.0f },
+{ 0.56f, 0.00f, 0.00f, 1.0f },
+{ 0.29f, 0.29f, 0.29f, 1.0f },
+{ 0.64f, 0.00f, 0.00f, 1.0f },
+{ 0.64f, 0.09f, 0.00f, 1.0f },
+{ 0.64f, 0.43f, 0.00f, 1.0f },
+{ 0.53f, 0.64f, 0.00f, 1.0f },
+{ 0.20f, 0.64f, 0.00f, 1.0f },
+{ 0.00f, 0.64f, 0.00f, 1.0f },
+{ 0.00f, 0.64f, 0.32f, 1.0f },
+{ 0.00f, 0.44f, 0.64f, 1.0f },
+{ 0.00f, 0.30f, 0.64f, 1.0f },
+{ 0.00f, 0.00f, 0.64f, 1.0f },
+{ 0.00f, 0.00f, 0.64f, 1.0f },
+{ 0.22f, 0.00f, 0.64f, 1.0f },
+{ 0.55f, 0.00f, 0.64f, 1.0f },
+{ 0.64f, 0.00f, 0.40f, 1.0f },
+{ 0.64f, 0.00f, 0.07f, 1.0f },
+{ 0.36f, 0.36f, 0.36f, 1.0f },
+{ 0.72f, 0.00f, 0.00f, 1.0f },
+{ 0.72f, 0.17f, 0.00f, 1.0f },
+{ 0.72f, 0.51f, 0.00f, 1.0f },
+{ 0.61f, 0.72f, 0.00f, 1.0f },
+{ 0.28f, 0.72f, 0.00f, 1.0f },
+{ 0.00f, 0.72f, 0.00f, 1.0f },
+{ 0.00f, 0.72f, 0.40f, 1.0f },
+{ 0.00f, 0.52f, 0.72f, 1.0f },
+{ 0.00f, 0.38f, 0.72f, 1.0f },
+{ 0.00f, 0.05f, 0.72f, 1.0f },
+{ 0.00f, 0.00f, 0.72f, 1.0f },
+{ 0.30f, 0.00f, 0.72f, 1.0f },
+{ 0.63f, 0.00f, 0.72f, 1.0f },
+{ 0.72f, 0.00f, 0.48f, 1.0f },
+{ 0.72f, 0.00f, 0.15f, 1.0f },
+{ 0.44f, 0.44f, 0.44f, 1.0f },
+{ 0.80f, 0.00f, 0.00f, 1.0f },
+{ 0.80f, 0.25f, 0.00f, 1.0f },
+{ 0.80f, 0.58f, 0.00f, 1.0f },
+{ 0.69f, 0.80f, 0.00f, 1.0f },
+{ 0.36f, 0.80f, 0.00f, 1.0f },
+{ 0.02f, 0.80f, 0.00f, 1.0f },
+{ 0.00f, 0.80f, 0.48f, 1.0f },
+{ 0.00f, 0.60f, 0.80f, 1.0f },
+{ 0.00f, 0.46f, 0.80f, 1.0f },
+{ 0.00f, 0.13f, 0.80f, 1.0f },
+{ 0.05f, 0.00f, 0.80f, 1.0f },
+{ 0.38f, 0.00f, 0.80f, 1.0f },
+{ 0.71f, 0.00f, 0.80f, 1.0f },
+{ 0.80f, 0.00f, 0.56f, 1.0f },
+{ 0.80f, 0.00f, 0.23f, 1.0f },
+{ 0.52f, 0.52f, 0.52f, 1.0f },
+{ 0.88f, 0.00f, 0.00f, 1.0f },
+{ 0.88f, 0.33f, 0.00f, 1.0f },
+{ 0.88f, 0.66f, 0.00f, 1.0f },
+{ 0.76f, 0.88f, 0.00f, 1.0f },
+{ 0.44f, 0.88f, 0.00f, 1.0f },
+{ 0.10f, 0.88f, 0.00f, 1.0f },
+{ 0.00f, 0.88f, 0.56f, 1.0f },
+{ 0.00f, 0.68f, 0.88f, 1.0f },
+{ 0.00f, 0.54f, 0.88f, 1.0f },
+{ 0.00f, 0.21f, 0.88f, 1.0f },
+{ 0.13f, 0.00f, 0.88f, 1.0f },
+{ 0.45f, 0.00f, 0.88f, 1.0f },
+{ 0.78f, 0.00f, 0.88f, 1.0f },
+{ 0.88f, 0.00f, 0.64f, 1.0f },
+{ 0.88f, 0.00f, 0.31f, 1.0f },
+{ 0.60f, 0.60f, 0.60f, 1.0f },
+{ 0.96f, 0.08f, 0.08f, 1.0f },
+{ 0.96f, 0.41f, 0.08f, 1.0f },
+{ 0.96f, 0.74f, 0.08f, 1.0f },
+{ 0.84f, 0.96f, 0.08f, 1.0f },
+{ 0.51f, 0.96f, 0.08f, 1.0f },
+{ 0.18f, 0.96f, 0.08f, 1.0f },
+{ 0.08f, 0.96f, 0.64f, 1.0f },
+{ 0.08f, 0.76f, 0.96f, 1.0f },
+{ 0.08f, 0.62f, 0.96f, 1.0f },
+{ 0.08f, 0.29f, 0.96f, 1.0f },
+{ 0.20f, 0.08f, 0.96f, 1.0f },
+{ 0.53f, 0.08f, 0.96f, 1.0f },
+{ 0.86f, 0.08f, 0.96f, 1.0f },
+{ 0.96f, 0.08f, 0.72f, 1.0f },
+{ 0.96f, 0.08f, 0.39f, 1.0f },
+{ 0.68f, 0.68f, 0.68f, 1.0f },
+{ 1.00f, 0.16f, 0.16f, 1.0f },
+{ 1.00f, 0.49f, 0.16f, 1.0f },
+{ 1.00f, 0.82f, 0.16f, 1.0f },
+{ 0.92f, 1.00f, 0.16f, 1.0f },
+{ 0.59f, 1.00f, 0.16f, 1.0f },
+{ 0.26f, 1.00f, 0.16f, 1.0f },
+{ 0.16f, 1.00f, 0.71f, 1.0f },
+{ 0.16f, 0.84f, 1.00f, 1.0f },
+{ 0.16f, 0.69f, 1.00f, 1.0f },
+{ 0.16f, 0.36f, 1.00f, 1.0f },
+{ 0.28f, 0.16f, 1.00f, 1.0f },
+{ 0.61f, 0.16f, 1.00f, 1.0f },
+{ 0.94f, 0.16f, 1.00f, 1.0f },
+{ 1.00f, 0.16f, 0.80f, 1.0f },
+{ 1.00f, 0.16f, 0.47f, 1.0f },
+{ 0.76f, 0.76f, 0.76f, 1.0f },
+{ 1.00f, 0.24f, 0.24f, 1.0f },
+{ 1.00f, 0.56f, 0.24f, 1.0f },
+{ 1.00f, 0.90f, 0.24f, 1.0f },
+{ 1.00f, 1.00f, 0.24f, 1.0f },
+{ 0.67f, 1.00f, 0.24f, 1.0f },
+{ 0.34f, 1.00f, 0.24f, 1.0f },
+{ 0.24f, 1.00f, 0.79f, 1.0f },
+{ 0.24f, 0.91f, 1.00f, 1.0f },
+{ 0.24f, 0.77f, 1.00f, 1.0f },
+{ 0.24f, 0.44f, 1.00f, 1.0f },
+{ 0.36f, 0.24f, 1.00f, 1.0f },
+{ 0.69f, 0.24f, 1.00f, 1.0f },
+{ 1.00f, 0.24f, 1.00f, 1.0f },
+{ 1.00f, 0.24f, 0.87f, 1.0f },
+{ 1.00f, 0.24f, 0.55f, 1.0f },
+{ 0.84f, 0.84f, 0.84f, 1.0f },
+{ 1.00f, 0.31f, 0.31f, 1.0f },
+{ 1.00f, 0.64f, 0.31f, 1.0f },
+{ 1.00f, 0.98f, 0.31f, 1.0f },
+{ 1.00f, 1.00f, 0.31f, 1.0f },
+{ 0.75f, 1.00f, 0.31f, 1.0f },
+{ 0.42f, 1.00f, 0.31f, 1.0f },
+{ 0.31f, 1.00f, 0.87f, 1.0f },
+{ 0.31f, 0.99f, 1.00f, 1.0f },
+{ 0.31f, 0.85f, 1.00f, 1.0f },
+{ 0.31f, 0.52f, 1.00f, 1.0f },
+{ 0.44f, 0.31f, 1.00f, 1.0f },
+{ 0.77f, 0.31f, 1.00f, 1.0f },
+{ 1.00f, 0.31f, 1.00f, 1.0f },
+{ 1.00f, 0.31f, 0.95f, 1.0f },
+{ 1.00f, 0.31f, 0.62f, 1.0f },
+{ 0.91f, 0.91f, 0.91f, 1.0f },
+{ 1.00f, 0.39f, 0.39f, 1.0f },
+{ 1.00f, 0.72f, 0.39f, 1.0f },
+{ 1.00f, 1.00f, 0.39f, 1.0f },
+{ 1.00f, 1.00f, 0.39f, 1.0f },
+{ 0.83f, 1.00f, 0.39f, 1.0f },
+{ 0.49f, 1.00f, 0.39f, 1.0f },
+{ 0.39f, 1.00f, 0.95f, 1.0f },
+{ 0.39f, 1.00f, 1.00f, 1.0f },
+{ 0.39f, 0.93f, 1.00f, 1.0f },
+{ 0.39f, 0.60f, 1.00f, 1.0f },
+{ 0.52f, 0.39f, 1.00f, 1.0f },
+{ 0.85f, 0.39f, 1.00f, 1.0f },
+{ 1.00f, 0.39f, 1.00f, 1.0f },
+{ 1.00f, 0.39f, 1.00f, 1.0f },
+{ 1.00f, 0.39f, 0.70f, 1.0f },
+{ 0.99f, 0.99f, 0.99f, 1.0f },
+{ 1.00f, 0.47f, 0.47f, 1.0f },
+{ 1.00f, 0.80f, 0.47f, 1.0f },
+{ 1.00f, 1.00f, 0.47f, 1.0f },
+{ 1.00f, 1.00f, 0.47f, 1.0f },
+{ 0.91f, 1.00f, 0.47f, 1.0f },
+{ 0.57f, 1.00f, 0.47f, 1.0f },
+{ 0.47f, 1.00f, 1.00f, 1.0f },
+{ 0.47f, 1.00f, 1.00f, 1.0f },
+{ 0.47f, 1.00f, 1.00f, 1.0f },
+{ 0.47f, 0.68f, 1.00f, 1.0f },
+{ 0.60f, 0.47f, 1.00f, 1.0f },
+{ 0.93f, 0.47f, 1.00f, 1.0f },
+{ 1.00f, 0.47f, 1.00f, 1.0f },
+{ 1.00f, 0.47f, 1.00f, 1.0f },
+{ 1.00f, 0.47f, 0.78f, 1.0f },
+{ 1.00f, 1.00f, 1.00f, 1.0f },
+{ 1.00f, 0.55f, 0.55f, 1.0f },
+{ 1.00f, 0.88f, 0.55f, 1.0f },
+{ 1.00f, 1.00f, 0.55f, 1.0f },
+{ 1.00f, 1.00f, 0.55f, 1.0f },
+{ 0.98f, 1.00f, 0.55f, 1.0f },
+{ 0.65f, 1.00f, 0.55f, 1.0f },
+{ 0.55f, 1.00f, 1.00f, 1.0f },
+{ 0.55f, 1.00f, 1.00f, 1.0f },
+{ 0.55f, 1.00f, 1.00f, 1.0f },
+{ 0.55f, 0.76f, 1.00f, 1.0f },
+{ 0.67f, 0.55f, 1.00f, 1.0f },
+{ 1.00f, 0.55f, 1.00f, 1.0f },
+{ 1.00f, 0.55f, 1.00f, 1.0f },
+{ 1.00f, 0.55f, 1.00f, 1.0f },
+{ 1.00f, 0.55f, 0.86f, 1.0f },
+{ 1.00f, 1.00f, 1.00f, 1.0f }
+		};
+
 		const std::vector<const char*> VALIDATION_LAYERS = {
 			"VK_LAYER_KHRONOS_validation"
 		};
@@ -151,7 +412,7 @@ namespace engine {
 			createSwapchain();
 			createSwapchainImageViews();
 
-			allocateCommandBuffers();
+			initCommands();
 
 			createRenderPass();
 			createFramebuffers();
@@ -161,6 +422,7 @@ namespace engine {
 			initDescriptors();
 			createPipelines();
 
+			loadTextures();
 			loadMeshes();
 
 			initScene();
@@ -169,7 +431,7 @@ namespace engine {
 		}
 
 		void Renderer::draw() {
-			float camMoveSpeed = 1.5f;
+			float camMoveSpeed = 0.1f;
 			if (mWindow->holdingW) {
 				camPos.z += camMoveSpeed * 0.016f;
 			}
@@ -221,7 +483,7 @@ namespace engine {
 
 			VkClearValue clearValue;
 			float flash = abs(sin(mFrameNumber / 360.0f));
-			clearValue.color = { {0.0f, 0.0f, flash, 1.0f } };
+			clearValue.color = { {0.0f, 0.0f, 1.0f, 1.0f } };
 
 			// Clear depth
 			VkClearValue depthClear;
@@ -364,17 +626,16 @@ namespace engine {
 			
 			GPUObjectData* objectSSBO = (GPUObjectData*)objectData;
 
-			glm::mat4 rotation = glm::rotate(glm::mat4{ 1.0f }, glm::radians(mFrameNumber * 0.4f), glm::vec3(1, 0, 0))*
+			/*glm::mat4 rotation = glm::rotate(glm::mat4{ 1.0f }, glm::radians(mFrameNumber * 0.4f), glm::vec3(1, 0, 0))*
 				glm::rotate(glm::mat4{ 1.0f }, glm::radians(mFrameNumber * 0.4f), glm::vec3(0, 1, 0))*
-				glm::rotate(glm::mat4{ 1.0f }, glm::radians(mFrameNumber * 0.4f), glm::vec3(0, 0, 1));
+				glm::rotate(glm::mat4{ 1.0f }, glm::radians(mFrameNumber * 0.4f), glm::vec3(0, 0, 1));*/
 
 			for (int i = 0; i < count; i++) {
 				RenderObject& object = first[i];
-				objectSSBO[i].modelMatrix = object.transformMatrix * rotation;
+				objectSSBO[i].modelMatrix = object.transformMatrix;
 			}
 
 			vmaUnmapMemory(mAllocator, getCurrentFrame().objectBuffer.allocation);
-
 
 			Mesh* lastMesh = nullptr;
 			Material* lastMaterial = nullptr;
@@ -398,6 +659,10 @@ namespace engine {
 					
 					// Object Data descriptor
 					vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, object.material->pipelineLayout, 1, 1, &getCurrentFrame().objectDescriptor, 0, nullptr);
+				
+					if (object.material->textureSet != VK_NULL_HANDLE) {
+						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, object.material->pipelineLayout, 2, 1, &object.material->textureSet, 0, nullptr);
+					}
 				}
 
 				/*MeshPushConstants constants;
@@ -608,10 +873,18 @@ namespace engine {
 		}
 
 
-		void Renderer::allocateCommandBuffers() {
+		void Renderer::initCommands() {
 			for (int i = 0; i < FRAME_OVERLAP; i++) {
 				mDevice->getGraphicsPool().allocateBuffers(&mFrames[i].frameCommandBuffer, 1);
 			}
+
+			mUploadContext.commandPool = mDevice->createCommandPool(QUEUE_TYPE_GRAPHICS, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+
+			mMainDeletionQueue.pushFunction([&]() {
+				mUploadContext.commandPool = nullptr;
+			});
+
+			mUploadContext.commandPool->allocateBuffers(&mUploadContext.commandBuffer, 1);
 		}
 
 
@@ -740,17 +1013,9 @@ namespace engine {
 
 
 		void Renderer::createSyncStructures() {
-			VkFenceCreateInfo fenceCreateInfo{};
-			fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-			fenceCreateInfo.pNext = nullptr;
+			VkFenceCreateInfo fenceCreateInfo = tools::createFence(VK_FENCE_CREATE_SIGNALED_BIT);
 
-			// Create the fence with the VK_FENCE_CREATE_SIGNALED_BIT flag so it can be waited on before being used by a GPU Command
-			fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-			VkSemaphoreCreateInfo semaphoreCreateInfo{};
-			semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-			semaphoreCreateInfo.pNext = nullptr;
-			semaphoreCreateInfo.flags = 0;
+			VkSemaphoreCreateInfo semaphoreCreateInfo = tools::createSemaphore(0);
 
 			// Create the sync structures for each frame
 			for (int i = 0; i < FRAME_OVERLAP; i++) {
@@ -767,7 +1032,17 @@ namespace engine {
 				}
 			}
 
+			// Create upload fence
+			VkFenceCreateInfo uploadFenceInfo = tools::createFence();
+
+			if (vkCreateFence(mDevice->getDevice(), &uploadFenceInfo, nullptr, &mUploadContext.uploadFence) != VK_SUCCESS) {
+				util::displayError("Failed to create fence");
+			}
+
 			mMainDeletionQueue.pushFunction([=]() {
+
+				vkDestroyFence(mDevice->getDevice(), mUploadContext.uploadFence, nullptr);
+
 				for (int i = 0; i < FRAME_OVERLAP; i++) {
 					vkDestroyFence(mDevice->getDevice(), mFrames[i].renderFence, nullptr);
 
@@ -783,7 +1058,8 @@ namespace engine {
 			std::vector<VkDescriptorPoolSize> sizes = {
 				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10},
 				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 10 },
-				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10 }
+				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10 },
+			    { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10 }
 			};
 
 			VkDescriptorPoolCreateInfo poolInfo{};
@@ -828,6 +1104,17 @@ namespace engine {
 
 			vkCreateDescriptorSetLayout(mDevice->getDevice(), &set2Info, nullptr, &mObjectSetLayout);
 
+
+			// Create texture descriptor set layout
+			VkDescriptorSetLayoutBinding textureBind{};
+			textureBind.binding = 0;
+			textureBind.descriptorCount = 1;
+			textureBind.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			textureBind.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+			VkDescriptorSetLayoutCreateInfo set3Info = tools::createDescriptorSetLayoutInfo(1, &textureBind, 0);
+
+			vkCreateDescriptorSetLayout(mDevice->getDevice(), &set3Info, nullptr, &mSingleTextureLayout);
 
 			// Create scene parameter buffer
 			const size_t globalBufferSize = FRAME_OVERLAP * padUniformBufferSize(sizeof(GPUCameraData) + sizeof(GPUSceneData));
@@ -905,6 +1192,7 @@ namespace engine {
 			mMainDeletionQueue.pushFunction([=]() {
 				vkDestroyDescriptorSetLayout(mDevice->getDevice(), mGlobalSetLayout, nullptr);
 				vkDestroyDescriptorSetLayout(mDevice->getDevice(), mObjectSetLayout, nullptr);
+				vkDestroyDescriptorSetLayout(mDevice->getDevice(), mSingleTextureLayout, nullptr);
 				vkDestroyDescriptorPool(mDevice->getDevice(), mDescriptorPool, nullptr);
 			});
 		}
@@ -940,9 +1228,9 @@ namespace engine {
 			pipelineLayoutInfo.pushConstantRangeCount = 1;
 			pipelineLayoutInfo.pPushConstantRanges = &pushConstant;
 
-			VkDescriptorSetLayout setLayouts[]{ mGlobalSetLayout, mObjectSetLayout };
+			VkDescriptorSetLayout setLayouts[]{ mGlobalSetLayout, mObjectSetLayout, mSingleTextureLayout };
 
-			pipelineLayoutInfo.setLayoutCount = 2;
+			pipelineLayoutInfo.setLayoutCount = 3;
 			pipelineLayoutInfo.pSetLayouts = setLayouts;
 
 			if (vkCreatePipelineLayout(mDevice->getDevice(), &pipelineLayoutInfo, nullptr, &mTrianglePipelineLayout) != VK_SUCCESS) {
@@ -1025,35 +1313,90 @@ namespace engine {
 			mMesh.loadFromObj("../../assets/monkey_smooth.obj");
 			mTeapotMesh.loadFromObj("../../assets/teapot.obj");
 
+			mVikingRoom.loadFromObj("../../assets/lost_empire.obj");
+
 			uploadMesh(mTriangleMesh);
 			uploadMesh(mMesh);
 			uploadMesh(mTeapotMesh);
+			uploadMesh(mVikingRoom);
 			
 			mMeshes["monkey"] = mMesh;
 			mMeshes["triangle"] = mTriangleMesh;
 			mMeshes["teapot"] = mTeapotMesh;
+			mMeshes["empire"] = mVikingRoom;
+		}
+
+		void Renderer::loadTextures() {
+			Texture vikingRoom;
+
+			loadImageFromFile(*this, "../../assets/lost_empire-RGBA.png", vikingRoom.image);
+
+			VkImageViewCreateInfo imageInfo = tools::createImageViewInfo(VK_FORMAT_R8G8B8A8_SRGB, vikingRoom.image.image, VK_IMAGE_ASPECT_COLOR_BIT);
+			vkCreateImageView(mDevice->getDevice(), &imageInfo, nullptr, &vikingRoom.imageView);
+
+			mLoadedTextures["empire_diffuse"] = vikingRoom;
+
+			mMainDeletionQueue.pushFunction([=]() {
+				vkDestroyImageView(mDevice->getDevice(), vikingRoom.imageView, nullptr);
+			});
 		}
 
 		void Renderer::initScene() {
-			RenderObject monkey;
+			/*RenderObject monkey;
 			monkey.mesh = getMesh("monkey");
 			monkey.material = getMaterial("defaultmesh");
 			monkey.transformMatrix = glm::mat4{ 1.0f };
 
-			mRenderables.push_back(monkey);
+			mRenderables.push_back(monkey);*/
 
-			for (int x = -25; x <= 25; x++) {
-				for (int y = -25; y <= 25; y++) {
-					RenderObject tri;
-					tri.mesh = getMesh("monkey");
-					tri.material = getMaterial("defaultmesh");
-					glm::mat4 translation = glm::translate(glm::mat4{1.0f}, glm::vec3(x, 0, y));
-					glm::mat4 scale = glm::scale(glm::mat4{1.0f}, glm::vec3(0.2f, 0.2f, 0.2f));
-					tri.transformMatrix = translation * scale;
+			//for (int x = -25; x <= 25; x++) {
+			//	for (int y = -25; y <= 25; y++) {
+			//		RenderObject tri;
+			//		tri.mesh = getMesh("monkey");
+			//		tri.material = getMaterial("defaultmesh");
+			//		glm::mat4 translation = glm::translate(glm::mat4{1.0f}, glm::vec3(x, 0, y));
+			//		glm::mat4 scale = glm::scale(glm::mat4{1.0f}, glm::vec3(0.2f, 0.2f, 0.2f));
+			//		tri.transformMatrix = translation * scale;
 
-					mRenderables.push_back(tri);
-				}
-			}
+			//		mRenderables.push_back(tri);
+			//	}
+			//}
+
+			VkSamplerCreateInfo samplerInfo = tools::createSamplerInfo(VK_FILTER_NEAREST);
+
+			VkSampler blockySampler;
+			vkCreateSampler(mDevice->getDevice(), &samplerInfo, nullptr, &blockySampler);
+
+			Material* texturedMat = getMaterial("defaultmesh");
+
+			VkDescriptorSetAllocateInfo allocInfo{};
+			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			allocInfo.pNext = nullptr;
+			allocInfo.descriptorPool = mDescriptorPool;
+			allocInfo.descriptorSetCount = 1;
+			allocInfo.pSetLayouts = &mSingleTextureLayout;
+
+			vkAllocateDescriptorSets(mDevice->getDevice(), &allocInfo, &texturedMat->textureSet);
+
+			VkDescriptorImageInfo imageBufferInfo;
+			imageBufferInfo.sampler = blockySampler;
+			imageBufferInfo.imageView = mLoadedTextures["empire_diffuse"].imageView;
+			imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+			VkWriteDescriptorSet tex1 = tools::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMat->textureSet, &imageBufferInfo, 0);
+
+			vkUpdateDescriptorSets(mDevice->getDevice(), 1, &tex1, 0, nullptr);
+
+			RenderObject map;
+			map.mesh = getMesh("empire");
+			map.material = getMaterial("defaultmesh");
+			map.transformMatrix = glm::translate(glm::vec3{5, -10, 0});
+
+			mRenderables.push_back(map);
+
+			mMainDeletionQueue.pushFunction([=]() {
+				vkDestroySampler(mDevice->getDevice(), blockySampler, nullptr);
+			});
 		}
 
 
@@ -1162,16 +1505,44 @@ namespace engine {
 		}
 
 		void Renderer::uploadMesh(Mesh& mesh) {
+			const size_t bufferSize = mesh.vertices.size() * sizeof(Vertex);
+
+			// Allocate staging buffer
+			VkBufferCreateInfo stagingBufferInfo{};
+			stagingBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			stagingBufferInfo.pNext = nullptr;
+
+			stagingBufferInfo.size = bufferSize;
+			stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+			// Let VMA know that this data should be on CPU RAM
+			VmaAllocationCreateInfo vmaAllocInfo{};
+			vmaAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+
+			AllocatedBuffer stagingBuffer;
+
+			if (vmaCreateBuffer(mAllocator, &stagingBufferInfo, &vmaAllocInfo,
+				&stagingBuffer.buffer,
+				&stagingBuffer.allocation,
+				nullptr) != VK_SUCCESS) {
+				util::displayError("Failed to create staging buffer");
+			}
+
+			// Copy vertex data
+			void* data;
+			vmaMapMemory(mAllocator, stagingBuffer.allocation, &data);
+			memcpy(data, mesh.vertices.data(), mesh.vertices.size() * sizeof(Vertex));
+			vmaUnmapMemory(mAllocator, stagingBuffer.allocation);
+
 			// Allocate vertex buffer
 			VkBufferCreateInfo bufferInfo{};
 			bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 			bufferInfo.pNext = nullptr;
 
-			bufferInfo.size = mesh.vertices.size() * sizeof(Vertex);
-			bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+			bufferInfo.size = bufferSize;
+			bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
-			VmaAllocationCreateInfo vmaAllocInfo{};
-			vmaAllocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+			vmaAllocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
 			if (vmaCreateBuffer(mAllocator, &bufferInfo, &vmaAllocInfo,
 				&mesh.vertexBuffer.buffer,
@@ -1180,17 +1551,19 @@ namespace engine {
 				util::displayError("Failed to create vertex buffer");
 			}
 
+			immediateSubmit([=](VkCommandBuffer cmd) {
+				VkBufferCopy copy;
+				copy.dstOffset = 0;
+				copy.srcOffset = 0;
+				copy.size = bufferSize;
+				vkCmdCopyBuffer(cmd, stagingBuffer.buffer, mesh.vertexBuffer.buffer, 1, &copy);
+			});
+
 			mAllocationDeletionQueue.pushFunction([=]() {
 				vmaDestroyBuffer(mAllocator, mesh.vertexBuffer.buffer, mesh.vertexBuffer.allocation);
 			});
 
-			// Copy vertex data
-			void* data;
-			vmaMapMemory(mAllocator, mesh.vertexBuffer.allocation, &data);
-
-			memcpy(data, mesh.vertices.data(), mesh.vertices.size() * sizeof(Vertex));
-
-			vmaUnmapMemory(mAllocator, mesh.vertexBuffer.allocation);
+			vmaDestroyBuffer(mAllocator, stagingBuffer.buffer, stagingBuffer.allocation);
 		}
 
 		Mesh* Renderer::getMesh(const std::string& name) {
@@ -1244,6 +1617,33 @@ namespace engine {
 			}
 
 			return newBuffer;
+		}
+
+		void Renderer::immediateSubmit(std::function<void(VkCommandBuffer cmd)> && function) {
+			VkCommandBuffer cmd = mUploadContext.commandBuffer;
+
+			VkCommandBufferBeginInfo cmdBeginInfo = tools::createCommandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+			if (vkBeginCommandBuffer(cmd, &cmdBeginInfo) != VK_SUCCESS) {
+				util::displayError("Failed to begin command buffer");
+			}
+
+			function(cmd);
+
+			if (vkEndCommandBuffer(cmd) != VK_SUCCESS) {
+				util::displayError("Failed to end command buffer");
+			}
+
+			VkSubmitInfo submit = tools::createSubmitInfo(&cmd);
+
+			if (vkQueueSubmit(mDevice->getGraphicsQueue(), 1, &submit, mUploadContext.uploadFence) != VK_SUCCESS) {
+				util::displayError("Failed to submit to queue");
+			}
+
+			vkWaitForFences(mDevice->getDevice(), 1, &mUploadContext.uploadFence, true, 9999999999);
+			vkResetFences(mDevice->getDevice(), 1, &mUploadContext.uploadFence);
+
+			mUploadContext.commandPool->reset();
 		}
 
 

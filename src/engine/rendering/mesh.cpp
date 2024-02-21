@@ -15,8 +15,7 @@ namespace engine {
 			mainBinding.stride = sizeof(Vertex);
 			mainBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-			description.bindings.resize(1);
-			description.bindings[0] = mainBinding;
+			description.bindings.push_back(mainBinding);
 
 			// Position will be stored at location 0
 			VkVertexInputAttributeDescription positionAttrib{};
@@ -39,10 +38,17 @@ namespace engine {
 			colorAttrib.format = VK_FORMAT_R32G32B32_SFLOAT;
 			colorAttrib.offset = offsetof(Vertex, color);
 
-			description.attributes.resize(3);
-			description.attributes[0] = positionAttrib;
-			description.attributes[1] = normalAttrib;
-			description.attributes[2] = colorAttrib;
+			// UV will be stored at location 3
+			VkVertexInputAttributeDescription uvAttrib{};
+			uvAttrib.binding = 0;
+			uvAttrib.location = 3;
+			uvAttrib.format = VK_FORMAT_R32G32_SFLOAT;
+			uvAttrib.offset = offsetof(Vertex, uv);
+
+			description.attributes.push_back(positionAttrib);
+			description.attributes.push_back(normalAttrib);
+			description.attributes.push_back(colorAttrib);
+			description.attributes.push_back(uvAttrib);
 
 			return description;
 		}
@@ -57,17 +63,18 @@ namespace engine {
 			std::string warn;
 			std::string err;
 
-			tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filename, nullptr);
+			tinyobj::LoadObj(&attrib, &shapes, &materials, &err, filename, "../../assets/");
 
 			if (!warn.empty()) {
 				util::displayMessage(warn, DISPLAY_TYPE_WARN);
 			}
 
 			if (!err.empty()) {
-				util::displayMessage(err, DISPLAY_TYPE_ERR);
+				util::displayMessage(err, DISPLAY_TYPE_NONE);
 
-				return false;
+				//return false;
 			}
+
 
 			// Loop over shapes
 			for (size_t s = 0; s < shapes.size(); s++) {
@@ -100,6 +107,14 @@ namespace engine {
 							newVert.normal.x = nx;
 							newVert.normal.y = ny;
 							newVert.normal.z = nz;
+						}
+
+						if (attrib.texcoords.size() > 0) {
+							tinyobj::real_t ux = attrib.texcoords[2 * idx.texcoord_index + 0];
+							tinyobj::real_t uy = attrib.texcoords[2 * idx.texcoord_index + 1];
+
+							newVert.uv.x = ux;
+							newVert.uv.y = 1 - uy;
 						}
 
 						// Set vertex color to normal for display

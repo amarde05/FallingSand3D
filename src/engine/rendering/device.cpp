@@ -53,6 +53,18 @@ namespace engine {
 		}
 
 
+		std::unique_ptr<VulkanCommandPool> VulkanDevice::createCommandPool(int queueType, VkCommandPoolCreateFlags flags) {
+			switch (queueType) {
+			default:
+			case QUEUE_TYPE_GRAPHICS:
+				return std::make_unique<VulkanCommandPool>(mQueueFamilyIndices.graphicsFamily, mGraphicsQueue, mDevice, flags);
+			case QUEUE_TYPE_TRANSFER:
+				return std::make_unique<VulkanCommandPool>(mQueueFamilyIndices.graphicsFamily, mGraphicsQueue, mDevice, flags);
+			//case QUEUE_TYPE_COMPUTE:
+			//	return std::make_unique<VulkanCommandPool>(mQueueFamilyIndices.computeFamily, mComputPool, mDevice, flags);
+			}
+		}
+
 		void VulkanDevice::createBuffer(VkDeviceSize allocSize, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
 			VkBuffer& buffer, VkDeviceMemory& bufferMemory) const {
 			VkBufferCreateInfo bufferInfo{};
