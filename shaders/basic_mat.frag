@@ -2,7 +2,7 @@
 
 layout (location = 0) out vec4 outFragColor;
 
-layout (set = 1, binding = 0) uniform BasicData {
+layout (set = 2, binding = 0) uniform BasicData {
 	vec4 color;
 } basicData;
 

@@ -600,23 +600,25 @@ namespace engine {
 			Mesh* lastMesh = nullptr;
 			Material* lastMaterial = nullptr;
 
+			bool boundGlobalDescriptors = false;
+
 			for (int i = 0; i < count; i++) {
 				RenderObject& object = first[i];
 
+				if (!boundGlobalDescriptors) {
+					object.material->bindGlobalSet(cmd, frameIndex);
+					object.material->bindObjectSet(cmd, frameIndex);
+
+					boundGlobalDescriptors = true;
+				}
+
 				// Only bind the pipeline if it doesn't match with the already bount one
 				if (object.material != lastMaterial) {
-					object.material->writeData();
 					object.material->bind(cmd, frameIndex);
 
 					lastMaterial = object.material;
 				}
 
-				/*MeshPushConstants constants;
-
-				constants.renderMatrix = object.transformMatrix * rotation;
-
-				vkCmdPushConstants(cmd, object.material->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshPushConstants), &constants);*/
-				
 				// Only bind the mesh if it's a different one from last bind
 				if (object.mesh != lastMesh) {
 					VkDeviceSize offset = 0;
@@ -1280,30 +1282,30 @@ namespace engine {
 		}
 
 		void Renderer::initMaterials() {
-			Material::createMaterials();
+			//Material::createMaterials();
 			Material::initializeMaterials(mDevice.get(), mRenderPass, FRAME_OVERLAP);
 		}
 
 		void Renderer::initScene() {
 			RenderObject monkey;
 			monkey.mesh = getMesh("monkey");
-			monkey.material = Material::getMaterial("default");
+			monkey.material = Material::getMaterial("red");
 			monkey.transformMatrix = glm::mat4{ 1.0f };
 
 			mRenderables.push_back(monkey);
 
-			//for (int x = -25; x <= 25; x++) {
-			//	for (int y = -25; y <= 25; y++) {
-			//		RenderObject tri;
-			//		tri.mesh = getMesh("monkey");
-			//		tri.material = getMaterial("defaultmesh");
-			//		glm::mat4 translation = glm::translate(glm::mat4{1.0f}, glm::vec3(x, 0, y));
-			//		glm::mat4 scale = glm::scale(glm::mat4{1.0f}, glm::vec3(0.2f, 0.2f, 0.2f));
-			//		tri.transformMatrix = translation * scale;
+			for (int x = -25; x <= 25; x++) {
+				for (int y = -25; y <= 25; y++) {
+					RenderObject tri;
+					tri.mesh = getMesh("monkey");
+					tri.material = Material::getMaterial("green");
+					glm::mat4 translation = glm::translate(glm::mat4{1.0f}, glm::vec3(x, 0, y));
+					glm::mat4 scale = glm::scale(glm::mat4{1.0f}, glm::vec3(0.2f, 0.2f, 0.2f));
+					tri.transformMatrix = translation * scale;
 
-			//		mRenderables.push_back(tri);
-			//	}
-			//}
+					mRenderables.push_back(tri);
+				}
+			}
 
 			//VkSamplerCreateInfo samplerInfo = tools::createSamplerInfo(VK_FILTER_NEAREST);
 

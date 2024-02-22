@@ -35,7 +35,7 @@ namespace engine {
 
 		static Window& getMainWindow();
 	private:
-		VkExtent2D mWindowExtent{ 1700, 900 };
+		VkExtent2D mWindowExtent{ 850, 450 };
 		SDL_Window* mWindow{ nullptr };
 
 		bool minimized{ false };
