@@ -1,6 +1,0 @@
-C:/Users/Antonio/Documents/Cellular Automata/FallingSand3D/bin/CMakeFiles/Shaders.dir
-C:/Users/Antonio/Documents/Cellular Automata/FallingSand3D/bin/CMakeFiles/ALL_BUILD.dir
-C:/Users/Antonio/Documents/Cellular Automata/FallingSand3D/bin/CMakeFiles/ZERO_CHECK.dir
-C:/Users/Antonio/Documents/Cellular Automata/FallingSand3D/bin/third_party/CMakeFiles/tinyobjloader.dir
-C:/Users/Antonio/Documents/Cellular Automata/FallingSand3D/bin/third_party/CMakeFiles/imgui.dir
-C:/Users/Antonio/Documents/Cellular Automata/FallingSand3D/bin/src/CMakeFiles/FallingSand3D.dir
