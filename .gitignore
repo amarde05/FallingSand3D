@@ -5,7 +5,6 @@
 *.slo
 *.lo
 *.o
-*.obj
 
 # Precompiled Headers
 *.gch
@@ -37,3 +36,5 @@
 *.vsidx
 *.log
 *.tlog
+
+bin/

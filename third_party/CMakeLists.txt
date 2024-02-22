@@ -20,7 +20,6 @@ target_include_directories(tinyobjloader PUBLIC tinyobjloader)
 
 
 add_library(sdl2 INTERFACE)
-set(sdl2_DIR "C:/Users/Antonio/Documents/SDL2-2.28.3" CACHE PATH "Path to SDL2")
 
 if (WIN32)
 target_include_directories(sdl2 INTERFACE ${sdl2_DIR}/include ${sdl2_image_DIR}/include)

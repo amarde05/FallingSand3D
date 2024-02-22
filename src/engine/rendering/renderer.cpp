@@ -431,7 +431,7 @@ namespace engine {
 		}
 
 		void Renderer::draw() {
-			float camMoveSpeed = 0.1f;
+			float camMoveSpeed = 1.5f;
 			if (mWindow->holdingW) {
 				camPos.z += camMoveSpeed * 0.016f;
 			}
@@ -1311,25 +1311,25 @@ namespace engine {
 			mTriangleMesh.vertices[2].color = { 0.f,1.f, 0.0f }; //pure green
 
 			mMesh.loadFromObj("../../assets/monkey_smooth.obj");
-			mTeapotMesh.loadFromObj("../../assets/teapot.obj");
+			//mTeapotMesh.loadFromObj("../../assets/teapot.obj");
 
-			mVikingRoom.loadFromObj("../../assets/lost_empire.obj");
+			mVikingRoom.loadFromObj("../../assets/viking_room.obj");
 
 			uploadMesh(mTriangleMesh);
 			uploadMesh(mMesh);
-			uploadMesh(mTeapotMesh);
+			//uploadMesh(mTeapotMesh);
 			uploadMesh(mVikingRoom);
 			
 			mMeshes["monkey"] = mMesh;
 			mMeshes["triangle"] = mTriangleMesh;
-			mMeshes["teapot"] = mTeapotMesh;
+			//mMeshes["teapot"] = mTeapotMesh;
 			mMeshes["empire"] = mVikingRoom;
 		}
 
 		void Renderer::loadTextures() {
 			Texture vikingRoom;
 
-			loadImageFromFile(*this, "../../assets/lost_empire-RGBA.png", vikingRoom.image);
+			loadImageFromFile(*this, "../../assets/viking_room.png", vikingRoom.image);
 
 			VkImageViewCreateInfo imageInfo = tools::createImageViewInfo(VK_FORMAT_R8G8B8A8_SRGB, vikingRoom.image.image, VK_IMAGE_ASPECT_COLOR_BIT);
 			vkCreateImageView(mDevice->getDevice(), &imageInfo, nullptr, &vikingRoom.imageView);
@@ -1390,7 +1390,13 @@ namespace engine {
 			RenderObject map;
 			map.mesh = getMesh("empire");
 			map.material = getMaterial("defaultmesh");
-			map.transformMatrix = glm::translate(glm::vec3{5, -10, 0});
+
+			glm::mat4 rotation = glm::translate(glm::vec3{0, 5.5f, 8}) *
+				glm::rotate(glm::mat4{ 1.0f }, glm::radians(-90.0f), glm::vec3(0, 1, 0)) *
+				glm::rotate(glm::mat4{ 1.0f }, glm::radians(-90.0f), glm::vec3(1, 0, 0)) *
+				glm::rotate(glm::mat4{ 1.0f }, glm::radians(0.0f), glm::vec3(0, 0, 1));
+
+			map.transformMatrix = rotation;//glm::translate(glm::vec3{0, -10, 0});
 
 			mRenderables.push_back(map);
 
