@@ -4,8 +4,15 @@
 #include <SDL_vulkan.h>
 
 namespace engine {
-	Window::Window() {
+	Window* pMainWindow = nullptr;
 
+	Window::Window() {
+		if (pMainWindow == nullptr) {
+			pMainWindow = this;
+		}
+		else {
+			util::displayError("Cannot have more than one window");
+		}
 	}
 
 	void Window::init(const char* appName) {
@@ -89,6 +96,10 @@ namespace engine {
 
 	void Window::cleanup() {
 		SDL_DestroyWindow(mWindow);
+	}
+
+	Window& Window::getMainWindow() {
+		return *pMainWindow;
 	}
 
 	std::vector<const char*> Window::getRequiredSDLExtensions() const {

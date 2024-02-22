@@ -5,7 +5,7 @@
 #include "descriptors.h"
 #include "commands.h"
 #include "deletion_queue.h"
-#include "memory_management.h"
+#include "memory/memory_management.h"
 #include "mesh.h"
 
 #include <vulkan/vulkan.h>
@@ -37,7 +37,7 @@ namespace engine {
 			VkFence renderFence;
 			VkSemaphore presentSemaphore, renderSemaphore;
 
-			AllocatedBuffer objectBuffer;
+			memory::AllocatedBuffer objectBuffer;
 			VkDescriptorSet objectDescriptor;
 		};
 
@@ -64,16 +64,10 @@ namespace engine {
 			glm::mat4 renderMatrix;
 		};
 
-		struct Material {
-			VkDescriptorSet textureSet{ VK_NULL_HANDLE };
-			VkPipeline pipeline;
-			VkPipelineLayout pipelineLayout;
-		};
-
 		struct RenderObject {
 			Mesh* mesh;
 
-			Material* material;
+			class Material* material;
 
 			glm::mat4 transformMatrix;
 		};
@@ -82,11 +76,6 @@ namespace engine {
 			VkFence uploadFence;
 			std::unique_ptr<VulkanCommandPool> commandPool;
 			VkCommandBuffer commandBuffer;
-		};
-
-		struct Texture {
-			AllocatedImage image;
-			VkImageView imageView;
 		};
 
 		class Renderer {
@@ -100,16 +89,13 @@ namespace engine {
 			void draw();
 
 			void waitForGraphics();
-			
 
-			AllocatedBuffer createBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
 		
 			void immediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
 
-			VmaAllocator getAllocator() const { return mAllocator; }
+			VulkanDevice& getDevice() { return *mDevice.get(); };
 
 			DeletionQueue& getMainDeletionQueue() { return mMainDeletionQueue; }
-			DeletionQueue& getAllocationDeletionQueue() { return mAllocationDeletionQueue; }
 		private:
 			bool mStopRendering{ false };
 			int mFrameNumber{ 0 };
@@ -141,7 +127,7 @@ namespace engine {
 			Mesh mVikingRoom;
 
 			VkImageView mDepthImageView;
-			AllocatedImage mDepthImage;
+			memory::AllocatedImage mDepthImage;
 			VkFormat mDepthFormat;
 
 			VkDescriptorSetLayout mGlobalSetLayout;
@@ -153,31 +139,23 @@ namespace engine {
 
 			FrameData mFrames[FRAME_OVERLAP];
 
-			VmaAllocator mAllocator;
-			
 			DeletionQueue mMainDeletionQueue;
-			DeletionQueue mAllocationDeletionQueue;
 
 			std::vector<RenderObject> mRenderables;
 
-			std::unordered_map<std::string, Material> mMaterials;
 			std::unordered_map<std::string, Mesh> mMeshes;
 
 			glm::vec3 camPos {0, -6, -10};
 
 			GPUSceneData mSceneParameters;
-			AllocatedBuffer mGlobalBuffer;
+			memory::AllocatedBuffer mGlobalBuffer;
 
 			UploadContext mUploadContext;
-
-			std::unordered_map<std::string, Texture> mLoadedTextures;
 
 
 			void createInstance(VkApplicationInfo appInfo);
 			void setupDebugMessenger();
 			void createSurface();
-
-			void createAllocator();
 
 			void createSwapchain();
 			void createSwapchainImageViews();
@@ -192,12 +170,15 @@ namespace engine {
 
 			void initDescriptors();
 			void createPipelines();
-
+			void initMaterials();
+			
 			void loadMeshes();
 
 			void loadTextures();
 
 			void initScene();
+
+			
 
 
 			void drawObjects(VkCommandBuffer cmd, RenderObject* first, int count);
@@ -212,9 +193,6 @@ namespace engine {
 			
 			void uploadMesh(Mesh& mesh);
 			Mesh* getMesh(const std::string& name);
-
-			Material* createMaterial(VkPipeline pipeline, VkPipelineLayout layout, const std::string& name);
-			Material* getMaterial(const std::string& name);
 
 			FrameData& getCurrentFrame() { return mFrames[mFrameNumber % FRAME_OVERLAP]; }
 		};

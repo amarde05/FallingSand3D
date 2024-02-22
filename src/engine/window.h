@@ -32,6 +32,8 @@ namespace engine {
 		bool shouldQuit() { return quit; }
 
 		std::vector<const char*> getRequiredSDLExtensions() const;
+
+		static Window& getMainWindow();
 	private:
 		VkExtent2D mWindowExtent{ 1700, 900 };
 		SDL_Window* mWindow{ nullptr };

@@ -52,6 +52,7 @@ namespace engine {
 				return VK_NULL_HANDLE;
 			}
 			else {
+				util::displayMessage("Successfully created pipelin", DISPLAY_TYPE_INFO);
 				return newPipeline;
 			}
 		}

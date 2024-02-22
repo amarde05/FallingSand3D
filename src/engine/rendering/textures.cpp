@@ -9,9 +9,28 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include <unordered_map>
+
 namespace engine {
 	namespace rendering {
-		bool loadImageFromFile(Renderer& renderer, const char* file, AllocatedImage& outImage) {
+		std::unordered_map<std::string, Texture> loadedTextures;
+
+		void addTexture(std::string name, Texture& tex) {
+			loadedTextures[name] = tex;
+		}
+
+		Texture* getTexture(const std::string& name) {
+			auto it = loadedTextures.find(name);
+
+			if (it == loadedTextures.end()) {
+				return nullptr;
+			}
+			else {
+				return &it->second;
+			}
+		}
+
+		bool loadImageFromFile(Renderer& renderer, const char* file, memory::AllocatedImage& outImage) {
 			int texWidth, texHeight, texChannels;
 
 			stbi_uc* pixels = stbi_load(file, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
@@ -21,7 +40,7 @@ namespace engine {
 				return false;
 			}
 
-			VmaAllocator allocator = renderer.getAllocator();
+			VmaAllocator allocator = memory::getAllocator();
 
 			//void* pixelData = pixels;
 			VkDeviceSize imageSize = texWidth * texHeight * 4;
@@ -30,7 +49,7 @@ namespace engine {
 			VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
 
 			// Allocate temporary buffer for holding texture data to upload
-			AllocatedBuffer stagingBuffer = renderer.createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+			memory::AllocatedBuffer stagingBuffer = memory::createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 
 			// Copy data to buffer
 			void* data;
@@ -49,7 +68,7 @@ namespace engine {
 
 			VkImageCreateInfo dimgInfo = tools::createImageInfo(imageFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
 
-			AllocatedImage newImage;
+			memory::AllocatedImage newImage;
 
 			VmaAllocationCreateInfo dimgAllocInfo{};
 			dimgAllocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
@@ -104,7 +123,7 @@ namespace engine {
 				vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrierToReadable);
 			});
 
-			renderer.getAllocationDeletionQueue().pushFunction([=]() {
+			memory::getAllocationDeletionQueue().pushFunction([=]() {
 				vmaDestroyImage(allocator, newImage.image, newImage.allocation);
 			});
 

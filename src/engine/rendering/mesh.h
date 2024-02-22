@@ -1,6 +1,6 @@
 #pragma once
 
-#include "memory_management.h"
+#include "memory/memory_management.h"
 
 #include <vector>
 
@@ -28,7 +28,7 @@ namespace engine {
 		struct Mesh {
 			std::vector<Vertex> vertices;
 
-			AllocatedBuffer vertexBuffer;
+			memory::AllocatedBuffer vertexBuffer;
 
 			bool loadFromObj(const char* filename);
 		};

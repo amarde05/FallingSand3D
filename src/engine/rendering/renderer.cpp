@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "pipelines.h"
 #include "textures.h"
+#include "materials.h"
 #include "tools/initializers.h"
 #include "../../util/debug.h"
 
@@ -407,7 +408,7 @@ namespace engine {
 
 			mDevice = std::make_unique<VulkanDevice>(mInstance, mSurface, ENABLE_VALIDATION_LAYERS, VALIDATION_LAYERS);
 
-			createAllocator();
+			memory::createAllocator(mInstance, mDevice.get());
 
 			createSwapchain();
 			createSwapchainImageViews();
@@ -419,10 +420,12 @@ namespace engine {
 
 			createSyncStructures();
 
-			initDescriptors();
-			createPipelines();
+			/*initDescriptors();
+			createPipelines();*/
+			
+			initMaterials();
 
-			loadTextures();
+			//loadTextures();
 			loadMeshes();
 
 			initScene();
@@ -568,9 +571,9 @@ namespace engine {
 		}
 
 		void Renderer::cleanup() {
-			mAllocationDeletionQueue.flush();
-			
-			vmaDestroyAllocator(mAllocator);
+			memory::cleanupAllocations();
+
+			Material::cleanupMaterials();
 			
 			mMainDeletionQueue.flush();
 
@@ -590,52 +593,9 @@ namespace engine {
 		}
 
 		void Renderer::drawObjects(VkCommandBuffer cmd, RenderObject* first, int count) {
-			glm::mat4 view = glm::translate(glm::mat4(1.0f), camPos);
-			glm::mat4 proj = glm::perspective(glm::radians(70.0f), 1700.0f / 900.0f, 0.01f, 200.0f);
-			proj[1][1] *= -1;
-
-			glm::mat4 viewproj = proj * view;
-
-			GPUCameraData camData;
-			camData.proj = proj;
-			camData.view = view;
-			camData.viewproj = viewproj;
-
-			float framed = (mFrameNumber / 120.0f);
-
-			mSceneParameters.ambientColor = { sin(framed), cos(framed), sin(framed), 1};
-
-			// Copy data to the buffer
-			char* globalData;
-			vmaMapMemory(mAllocator, mGlobalBuffer.allocation, (void**)&globalData);
-
 			int frameIndex = mFrameNumber % FRAME_OVERLAP;
-			globalData += padUniformBufferSize(sizeof(GPUCameraData) + sizeof(GPUSceneData)) * frameIndex;
-
-			memcpy(globalData, &camData, sizeof(GPUCameraData));
 			
-			globalData += sizeof(GPUCameraData);
-
-			memcpy(globalData, &mSceneParameters, sizeof(GPUSceneData));
-
-			vmaUnmapMemory(mAllocator, mGlobalBuffer.allocation);
-
-			// Copy object data to buffer
-			void* objectData;
-			vmaMapMemory(mAllocator, getCurrentFrame().objectBuffer.allocation, &objectData);
-			
-			GPUObjectData* objectSSBO = (GPUObjectData*)objectData;
-
-			/*glm::mat4 rotation = glm::rotate(glm::mat4{ 1.0f }, glm::radians(mFrameNumber * 0.4f), glm::vec3(1, 0, 0))*
-				glm::rotate(glm::mat4{ 1.0f }, glm::radians(mFrameNumber * 0.4f), glm::vec3(0, 1, 0))*
-				glm::rotate(glm::mat4{ 1.0f }, glm::radians(mFrameNumber * 0.4f), glm::vec3(0, 0, 1));*/
-
-			for (int i = 0; i < count; i++) {
-				RenderObject& object = first[i];
-				objectSSBO[i].modelMatrix = object.transformMatrix;
-			}
-
-			vmaUnmapMemory(mAllocator, getCurrentFrame().objectBuffer.allocation);
+			Material::writeGlobalAndObjectData(frameIndex, count, first, camPos);
 
 			Mesh* lastMesh = nullptr;
 			Material* lastMaterial = nullptr;
@@ -645,24 +605,10 @@ namespace engine {
 
 				// Only bind the pipeline if it doesn't match with the already bount one
 				if (object.material != lastMaterial) {
-					vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, object.material->pipeline);
+					object.material->writeData();
+					object.material->bind(cmd, frameIndex);
+
 					lastMaterial = object.material;
-
-					// Global data descriptor
-					uint32_t camOffset = padUniformBufferSize(sizeof(GPUCameraData) + sizeof(GPUSceneData)) * frameIndex;
-					uint32_t sceneOffset = camOffset + sizeof(GPUCameraData);
-
-					uint32_t offsets[]{ camOffset, sceneOffset };
-
-					// Bind the descriptor set when changing pipeline
-					vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, object.material->pipelineLayout, 0, 1, &mGlobalDescriptor, 2, offsets);
-					
-					// Object Data descriptor
-					vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, object.material->pipelineLayout, 1, 1, &getCurrentFrame().objectDescriptor, 0, nullptr);
-				
-					if (object.material->textureSet != VK_NULL_HANDLE) {
-						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, object.material->pipelineLayout, 2, 1, &object.material->textureSet, 0, nullptr);
-					}
 				}
 
 				/*MeshPushConstants constants;
@@ -743,14 +689,6 @@ namespace engine {
 			if (SDL_Vulkan_CreateSurface(mWindow->getWindow(), mInstance, &mSurface) != SDL_TRUE) {
 				util::displayError("Failed to create surface!");
 			}
-		}
-
-		void Renderer::createAllocator() {
-			VmaAllocatorCreateInfo allocatorInfo{};
-			allocatorInfo.physicalDevice = mDevice->getPhysicalDevice();
-			allocatorInfo.device = mDevice->getDevice();
-			allocatorInfo.instance = mInstance;
-			vmaCreateAllocator(&allocatorInfo, &mAllocator);
 		}
 
 		void Renderer::createSwapchain() {
@@ -839,7 +777,7 @@ namespace engine {
 			dimgAllocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 			dimgAllocInfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-			vmaCreateImage(mAllocator, &dimgInfo, &dimgAllocInfo, &mDepthImage.image, &mDepthImage.allocation, nullptr);
+			vmaCreateImage(memory::getAllocator(), &dimgInfo, &dimgAllocInfo, &mDepthImage.image, &mDepthImage.allocation, nullptr);
 
 			VkImageViewCreateInfo dviewInfo{};
 			dviewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -858,9 +796,9 @@ namespace engine {
 				util::displayError("Failed to create depth image view");
 			}
 
-			mAllocationDeletionQueue.pushFunction([=]() {
+			memory::getAllocationDeletionQueue().pushFunction([=]() {
 				vkDestroyImageView(mDevice->getDevice(), mDepthImageView, nullptr);
-				vmaDestroyImage(mAllocator, mDepthImage.image, mDepthImage.allocation);
+				vmaDestroyImage(memory::getAllocator(), mDepthImage.image, mDepthImage.allocation);
 			});
 		}
 
@@ -1118,10 +1056,10 @@ namespace engine {
 
 			// Create scene parameter buffer
 			const size_t globalBufferSize = FRAME_OVERLAP * padUniformBufferSize(sizeof(GPUCameraData) + sizeof(GPUSceneData));
-			mGlobalBuffer = createBuffer(globalBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+			mGlobalBuffer = memory::createBuffer(globalBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-			mAllocationDeletionQueue.pushFunction([=]() {
-				vmaDestroyBuffer(mAllocator, mGlobalBuffer.buffer, mGlobalBuffer.allocation);
+			memory::getAllocationDeletionQueue().pushFunction([=]() {
+				vmaDestroyBuffer(memory::getAllocator(), mGlobalBuffer.buffer, mGlobalBuffer.allocation);
 			});
 
 			VkDescriptorSetAllocateInfo allocInfo{};
@@ -1160,7 +1098,7 @@ namespace engine {
 			// Set up camera buffers
 			for (int i = 0; i < FRAME_OVERLAP; i++) {
 				const int MAX_OBJECTS = 10000;
-				mFrames[i].objectBuffer = createBuffer(sizeof(GPUObjectData) * MAX_OBJECTS, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+				mFrames[i].objectBuffer = memory::createBuffer(sizeof(GPUObjectData) * MAX_OBJECTS, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 				VkDescriptorSetAllocateInfo objectAllocInfo{};
 				objectAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -1184,8 +1122,8 @@ namespace engine {
 
 				vkUpdateDescriptorSets(mDevice->getDevice(), 1, &objectWrite, 0, nullptr);
 
-				mAllocationDeletionQueue.pushFunction([=]() {
-					vmaDestroyBuffer(mAllocator, mFrames[i].objectBuffer.buffer, mFrames[i].objectBuffer.allocation);
+				memory::getAllocationDeletionQueue().pushFunction([=]() {
+					vmaDestroyBuffer(memory::getAllocator(), mFrames[i].objectBuffer.buffer, mFrames[i].objectBuffer.allocation);
 				});
 			}
 
@@ -1286,7 +1224,7 @@ namespace engine {
 
 			mTrianglePipeline = pipelineBuilder.buildPipeline(mDevice->getDevice(), mRenderPass);
 
-			createMaterial(mTrianglePipeline, mTrianglePipelineLayout, "defaultmesh");
+			//createMaterial(mTrianglePipeline, mTrianglePipelineLayout, "defaultmesh");
 
 			vkDestroyShaderModule(mDevice->getDevice(), triangleFragShader, nullptr);
 			vkDestroyShaderModule(mDevice->getDevice(), triangleVertexShader, nullptr);
@@ -1334,20 +1272,25 @@ namespace engine {
 			VkImageViewCreateInfo imageInfo = tools::createImageViewInfo(VK_FORMAT_R8G8B8A8_SRGB, vikingRoom.image.image, VK_IMAGE_ASPECT_COLOR_BIT);
 			vkCreateImageView(mDevice->getDevice(), &imageInfo, nullptr, &vikingRoom.imageView);
 
-			mLoadedTextures["empire_diffuse"] = vikingRoom;
+			addTexture("viking_diffuse", vikingRoom);
 
 			mMainDeletionQueue.pushFunction([=]() {
 				vkDestroyImageView(mDevice->getDevice(), vikingRoom.imageView, nullptr);
 			});
 		}
 
+		void Renderer::initMaterials() {
+			Material::createMaterials();
+			Material::initializeMaterials(mDevice.get(), mRenderPass, FRAME_OVERLAP);
+		}
+
 		void Renderer::initScene() {
-			/*RenderObject monkey;
+			RenderObject monkey;
 			monkey.mesh = getMesh("monkey");
-			monkey.material = getMaterial("defaultmesh");
+			monkey.material = Material::getMaterial("default");
 			monkey.transformMatrix = glm::mat4{ 1.0f };
 
-			mRenderables.push_back(monkey);*/
+			mRenderables.push_back(monkey);
 
 			//for (int x = -25; x <= 25; x++) {
 			//	for (int y = -25; y <= 25; y++) {
@@ -1362,47 +1305,47 @@ namespace engine {
 			//	}
 			//}
 
-			VkSamplerCreateInfo samplerInfo = tools::createSamplerInfo(VK_FILTER_NEAREST);
+			//VkSamplerCreateInfo samplerInfo = tools::createSamplerInfo(VK_FILTER_NEAREST);
 
-			VkSampler blockySampler;
-			vkCreateSampler(mDevice->getDevice(), &samplerInfo, nullptr, &blockySampler);
+			//VkSampler blockySampler;
+			//vkCreateSampler(mDevice->getDevice(), &samplerInfo, nullptr, &blockySampler);
 
-			Material* texturedMat = getMaterial("defaultmesh");
+			//MaterialObject* texturedMat = getMaterial("defaultmesh");
 
-			VkDescriptorSetAllocateInfo allocInfo{};
-			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			allocInfo.pNext = nullptr;
-			allocInfo.descriptorPool = mDescriptorPool;
-			allocInfo.descriptorSetCount = 1;
-			allocInfo.pSetLayouts = &mSingleTextureLayout;
+			//VkDescriptorSetAllocateInfo allocInfo{};
+			//allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			//allocInfo.pNext = nullptr;
+			//allocInfo.descriptorPool = mDescriptorPool;
+			//allocInfo.descriptorSetCount = 1;
+			//allocInfo.pSetLayouts = &mSingleTextureLayout;
 
-			vkAllocateDescriptorSets(mDevice->getDevice(), &allocInfo, &texturedMat->textureSet);
+			//vkAllocateDescriptorSets(mDevice->getDevice(), &allocInfo, &texturedMat->textureSet);
 
-			VkDescriptorImageInfo imageBufferInfo;
-			imageBufferInfo.sampler = blockySampler;
-			imageBufferInfo.imageView = mLoadedTextures["empire_diffuse"].imageView;
-			imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			//VkDescriptorImageInfo imageBufferInfo;
+			//imageBufferInfo.sampler = blockySampler;
+			//imageBufferInfo.imageView = getTexture("viking_diffuse")->imageView;
+			//imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-			VkWriteDescriptorSet tex1 = tools::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMat->textureSet, &imageBufferInfo, 0);
+			//VkWriteDescriptorSet tex1 = tools::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, texturedMat->textureSet, &imageBufferInfo, 0);
 
-			vkUpdateDescriptorSets(mDevice->getDevice(), 1, &tex1, 0, nullptr);
+			//vkUpdateDescriptorSets(mDevice->getDevice(), 1, &tex1, 0, nullptr);
 
-			RenderObject map;
-			map.mesh = getMesh("empire");
-			map.material = getMaterial("defaultmesh");
+			//RenderObject map;
+			//map.mesh = getMesh("empire");
+			//map.material = getMaterial("defaultmesh");
 
-			glm::mat4 rotation = glm::translate(glm::vec3{0, 5.5f, 8}) *
-				glm::rotate(glm::mat4{ 1.0f }, glm::radians(-90.0f), glm::vec3(0, 1, 0)) *
-				glm::rotate(glm::mat4{ 1.0f }, glm::radians(-90.0f), glm::vec3(1, 0, 0)) *
-				glm::rotate(glm::mat4{ 1.0f }, glm::radians(0.0f), glm::vec3(0, 0, 1));
+			//glm::mat4 rotation = glm::translate(glm::vec3{0, 5.5f, 8}) *
+			//	glm::rotate(glm::mat4{ 1.0f }, glm::radians(-90.0f), glm::vec3(0, 1, 0)) *
+			//	glm::rotate(glm::mat4{ 1.0f }, glm::radians(-90.0f), glm::vec3(1, 0, 0)) *
+			//	glm::rotate(glm::mat4{ 1.0f }, glm::radians(0.0f), glm::vec3(0, 0, 1));
 
-			map.transformMatrix = rotation;//glm::translate(glm::vec3{0, -10, 0});
+			//map.transformMatrix = rotation;//glm::translate(glm::vec3{0, -10, 0});
 
-			mRenderables.push_back(map);
+			//mRenderables.push_back(map);
 
-			mMainDeletionQueue.pushFunction([=]() {
-				vkDestroySampler(mDevice->getDevice(), blockySampler, nullptr);
-			});
+			//mMainDeletionQueue.pushFunction([=]() {
+			//	vkDestroySampler(mDevice->getDevice(), blockySampler, nullptr);
+			//});
 		}
 
 
@@ -1525,9 +1468,9 @@ namespace engine {
 			VmaAllocationCreateInfo vmaAllocInfo{};
 			vmaAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
 
-			AllocatedBuffer stagingBuffer;
+			memory::AllocatedBuffer stagingBuffer;
 
-			if (vmaCreateBuffer(mAllocator, &stagingBufferInfo, &vmaAllocInfo,
+			if (vmaCreateBuffer(memory::getAllocator(), &stagingBufferInfo, &vmaAllocInfo,
 				&stagingBuffer.buffer,
 				&stagingBuffer.allocation,
 				nullptr) != VK_SUCCESS) {
@@ -1536,9 +1479,9 @@ namespace engine {
 
 			// Copy vertex data
 			void* data;
-			vmaMapMemory(mAllocator, stagingBuffer.allocation, &data);
+			vmaMapMemory(memory::getAllocator(), stagingBuffer.allocation, &data);
 			memcpy(data, mesh.vertices.data(), mesh.vertices.size() * sizeof(Vertex));
-			vmaUnmapMemory(mAllocator, stagingBuffer.allocation);
+			vmaUnmapMemory(memory::getAllocator(), stagingBuffer.allocation);
 
 			// Allocate vertex buffer
 			VkBufferCreateInfo bufferInfo{};
@@ -1550,7 +1493,7 @@ namespace engine {
 
 			vmaAllocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-			if (vmaCreateBuffer(mAllocator, &bufferInfo, &vmaAllocInfo,
+			if (vmaCreateBuffer(memory::getAllocator(), &bufferInfo, &vmaAllocInfo,
 				&mesh.vertexBuffer.buffer,
 				&mesh.vertexBuffer.allocation,
 				nullptr) != VK_SUCCESS) {
@@ -1565,11 +1508,11 @@ namespace engine {
 				vkCmdCopyBuffer(cmd, stagingBuffer.buffer, mesh.vertexBuffer.buffer, 1, &copy);
 			});
 
-			mAllocationDeletionQueue.pushFunction([=]() {
-				vmaDestroyBuffer(mAllocator, mesh.vertexBuffer.buffer, mesh.vertexBuffer.allocation);
+			memory::getAllocationDeletionQueue().pushFunction([=]() {
+				vmaDestroyBuffer(memory::getAllocator(), mesh.vertexBuffer.buffer, mesh.vertexBuffer.allocation);
 			});
 
-			vmaDestroyBuffer(mAllocator, stagingBuffer.buffer, stagingBuffer.allocation);
+			vmaDestroyBuffer(memory::getAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
 		}
 
 		Mesh* Renderer::getMesh(const std::string& name) {
@@ -1581,48 +1524,6 @@ namespace engine {
 			else {
 				return &it->second;
 			}
-		}
-
-		Material* Renderer::createMaterial(VkPipeline pipeline, VkPipelineLayout layout, const std::string& name) {
-			Material mat;
-			mat.pipeline = pipeline;
-			mat.pipelineLayout = layout;
-			mMaterials[name] = mat;
-			return &mMaterials[name];
-		}
-
-		Material* Renderer::getMaterial(const std::string& name) {
-			auto it = mMaterials.find(name);
-			
-			if (it == mMaterials.end()) {
-				return nullptr;
-			}
-			else {
-				return &it->second;
-			}
-		}
-
-		AllocatedBuffer Renderer::createBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memUsage) {
-			VkBufferCreateInfo bufferInfo{};
-			bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-			bufferInfo.pNext = nullptr;
-
-			bufferInfo.size = allocSize;
-			bufferInfo.usage = usage;
-
-			VmaAllocationCreateInfo vmaAllocInfo{};
-			vmaAllocInfo.usage = memUsage;
-
-			AllocatedBuffer newBuffer;
-
-			if (vmaCreateBuffer(mAllocator, &bufferInfo, &vmaAllocInfo,
-				&newBuffer.buffer,
-				&newBuffer.allocation,
-				nullptr) != VK_SUCCESS) {
-				util::displayError("Failed to create buffer");
-			}
-
-			return newBuffer;
 		}
 
 		void Renderer::immediateSubmit(std::function<void(VkCommandBuffer cmd)> && function) {

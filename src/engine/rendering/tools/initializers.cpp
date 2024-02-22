@@ -18,6 +18,48 @@ namespace engine {
 				return write;
 			}
 
+			VkWriteDescriptorSet writeDescriptorBuffer(VkDescriptorType type, VkDescriptorSet dstSet, VkDescriptorBufferInfo* bufferInfo, uint32_t binding) {
+				VkWriteDescriptorSet write{};
+				write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				write.pNext = nullptr;
+
+				write.dstBinding = binding;
+				write.dstSet = dstSet;
+				write.descriptorCount = 1;
+				write.descriptorType = type;
+				write.pBufferInfo = bufferInfo;
+
+				return write;
+			}
+
+			VkWriteDescriptorSet writeDescriptorImage(VkDescriptorType type, VkDescriptorSet dstSet, VkDescriptorImageInfo* imageInfo, uint32_t binding) {
+				VkWriteDescriptorSet write{};
+				write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				write.pNext = nullptr;
+
+				write.dstBinding = binding;
+				write.dstSet = dstSet;
+				write.descriptorCount = 1;
+				write.descriptorType = type;
+				write.pImageInfo = imageInfo;
+
+				return write;
+			}
+
+			VkSamplerCreateInfo createSamplerInfo(VkFilter filters, VkSamplerAddressMode samplerAddressMode) {
+				VkSamplerCreateInfo info{};
+				info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+				info.pNext = nullptr;
+				
+				info.magFilter = filters;
+				info.minFilter = filters;
+				info.addressModeU = samplerAddressMode;
+				info.addressModeV = samplerAddressMode;
+				info.addressModeW = samplerAddressMode;
+				
+				return info;
+			}
+
 			VkDescriptorSetLayoutCreateInfo createDescriptorSetLayoutInfo(uint32_t bindingCount, VkDescriptorSetLayoutBinding* pBindings, VkDescriptorSetLayoutCreateFlags flags) {
 				VkDescriptorSetLayoutCreateInfo setInfo{};
 				setInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -123,34 +165,6 @@ namespace engine {
 				info.subresourceRange.aspectMask = aspectFlags;
 
 				return info;
-			}
-
-			VkSamplerCreateInfo createSamplerInfo(VkFilter filters, VkSamplerAddressMode samplerAddressMode) {
-				VkSamplerCreateInfo info{};
-				info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-				info.pNext = nullptr;
-				
-				info.magFilter = filters;
-				info.minFilter = filters;
-				info.addressModeU = samplerAddressMode;
-				info.addressModeV = samplerAddressMode;
-				info.addressModeW = samplerAddressMode;
-				
-				return info;
-			}
-
-			VkWriteDescriptorSet writeDescriptorImage(VkDescriptorType type, VkDescriptorSet dstSet, VkDescriptorImageInfo* imageInfo, uint32_t binding) {
-				VkWriteDescriptorSet write{};
-				write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				write.pNext = nullptr;
-
-				write.dstBinding = binding;
-				write.dstSet = dstSet;
-				write.descriptorCount = 1;
-				write.descriptorType = type;
-				write.pImageInfo = imageInfo;
-
-				return write;
 			}
 		}
 	}

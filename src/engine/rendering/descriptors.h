@@ -78,8 +78,8 @@ namespace engine {
 		public:
 			VulkanDescriptorWriter(VulkanDescriptorSetLayout& setLayout, VulkanDescriptorPool& pool);
 
-			VulkanDescriptorWriter& writeBuffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo);
-			VulkanDescriptorWriter& writeImage(uint32_t binding, VkDescriptorImageInfo* imageInfo);
+			VulkanDescriptorWriter& writeBuffer(uint32_t binding, VkDescriptorType type, VkDescriptorBufferInfo* bufferInfo);
+			VulkanDescriptorWriter& writeImage(uint32_t binding, VkDescriptorType type, VkDescriptorImageInfo* imageInfo);
 
 			bool build(VkDescriptorSet& set);
 			void overwrite(VkDescriptorSet& set);

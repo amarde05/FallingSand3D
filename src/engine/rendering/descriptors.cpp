@@ -126,7 +126,7 @@ namespace engine {
 
 		VulkanDescriptorWriter::VulkanDescriptorWriter(VulkanDescriptorSetLayout& setLayout, VulkanDescriptorPool& pool) : rSetLayout{ setLayout }, rPool{ pool } {}
 
-		VulkanDescriptorWriter& VulkanDescriptorWriter::writeBuffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo) {
+		VulkanDescriptorWriter& VulkanDescriptorWriter::writeBuffer(uint32_t binding, VkDescriptorType type, VkDescriptorBufferInfo* bufferInfo) {
 			if (rSetLayout.mBindings.count(binding) != 1) {
 				util::displayError("could not write to buffer because layout does not contain specified binding!");
 			}
@@ -139,6 +139,9 @@ namespace engine {
 
 			VkWriteDescriptorSet write{};
 			write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			write.pNext = nullptr;
+
+			write.descriptorType = type;
 			write.dstBinding = binding;
 			write.pBufferInfo = bufferInfo;
 			write.descriptorCount = 1;
@@ -147,7 +150,7 @@ namespace engine {
 			return *this;
 		}
 
-		VulkanDescriptorWriter& VulkanDescriptorWriter::writeImage(uint32_t binding, VkDescriptorImageInfo* imageInfo) {
+		VulkanDescriptorWriter& VulkanDescriptorWriter::writeImage(uint32_t binding, VkDescriptorType type, VkDescriptorImageInfo* imageInfo) {
 			if (rSetLayout.mBindings.count(binding) != 1) {
 				util::displayError("could not write to image because layout does not contain specified binding");
 			}
@@ -160,6 +163,9 @@ namespace engine {
 
 			VkWriteDescriptorSet write{};
 			write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			write.pNext = nullptr;
+
+			write.descriptorType = type;
 			write.dstBinding = binding;
 			write.pImageInfo = imageInfo;
 			write.descriptorCount = 1;

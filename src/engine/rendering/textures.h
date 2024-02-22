@@ -1,10 +1,21 @@
 #pragma once
 
-#include "memory_management.h"
+#include "memory/memory_management.h"
 #include "renderer.h"
+
+#include <string>
 
 namespace engine {
 	namespace rendering {
-		bool loadImageFromFile(Renderer& renderer, const char* file, AllocatedImage& outImage);
+		struct Texture {
+			memory::AllocatedImage image;
+			VkImageView imageView;
+		};
+
+		void addTexture(std::string name, Texture& tex);
+
+		Texture* getTexture(const std::string& name);
+
+		bool loadImageFromFile(Renderer& renderer, const char* file, memory::AllocatedImage& outImage);
 	}
 }
