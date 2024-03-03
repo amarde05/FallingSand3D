@@ -145,7 +145,8 @@ namespace engine {
 
 			std::unordered_map<std::string, Mesh> mMeshes;
 
-			glm::vec3 camPos {0, -6, -10};
+			glm::vec3 camPos {0, 0, -5};
+			glm::vec3 camRot {0, 0, 0};
 
 			GPUSceneData mSceneParameters;
 			memory::AllocatedBuffer mGlobalBuffer;

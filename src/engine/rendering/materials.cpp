@@ -1,6 +1,8 @@
 #include "materials.h"
 #include "pipelines.h"
+#include "textures.h"
 #include "mesh.h"
+#include "tools/initializers.h"
 #include "../window.h"
 #include "../../util/debug.h"
 
@@ -12,64 +14,16 @@
 
 namespace engine {
 	namespace rendering {
-		// Material layouts
-		MaterialLayout basicLayout{};
-
-		// Materials
-		std::unique_ptr<Material> redMat;
-		std::unique_ptr<Material> greenMat;
-
-		// MaterialBinding struct
-		MaterialMemoryObject& MaterialMemoryObject::createMemoryObject(MaterialLayoutBinding binding) {
-			MaterialMemoryObject out;
-
-			out.bindingType = binding.bindingType;
-
-			switch (binding.bindingType) {
-			case BINDING_TYPE_DATA: {
-				VkBufferUsageFlags usageFlags;
-
-				switch (binding.binding.descriptorType) {
-				default:
-				case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-				case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
-					usageFlags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-					break;
-				case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
-				case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
-					usageFlags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-					break;
-				}
-
-				out.buffer = memory::createBuffer(binding.bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-				VkDescriptorBufferInfo bInfo{};
-				bInfo.buffer = out.buffer.buffer;
-				bInfo.offset = 0;
-				bInfo.range = binding.bufferRange;
-
-				out.bufferInfo = bInfo;
-
-				memory::getAllocationDeletionQueue().pushFunction([=]() {
-					vmaDestroyBuffer(memory::getAllocator(), out.buffer.buffer, out.buffer.allocation);
-					});
-
-			} break;
-			case BINDING_TYPE_IMAGE: {
-
-			} break;
-			}
-
-			return out;
-		}
-
-
 		// MaterialLayout struct
 		std::unique_ptr<VulkanDescriptorSetLayout> MaterialLayout::sGlobalSetLayout;
 		std::unique_ptr<VulkanDescriptorSetLayout> MaterialLayout::sObjectSetLayout;
 
+		MaterialLayout::MaterialLayout(std::string vertFileName, std::string fragFileName) : vertFileName{ vertFileName }, fragFileName{ fragFileName } {
+			pipeline = VK_NULL_HANDLE;
+			pipelineLayout = VK_NULL_HANDLE;
+		}
 
-		void MaterialLayout::addDataBinding(uint32_t binding, VkDescriptorType descriptorType, VkShaderStageFlags stageFlags, size_t bufferSize, size_t bufferRange, uint32_t count) {
+		MaterialLayout& MaterialLayout::addDataBinding(uint32_t binding, VkDescriptorType descriptorType, VkShaderStageFlags stageFlags, size_t bufferSize, size_t bufferRange, uint32_t count) {
 			VkDescriptorSetLayoutBinding bind{};
 			bind.binding = binding;
 			bind.descriptorType = descriptorType;
@@ -83,6 +37,25 @@ namespace engine {
 			layoutBinding.bufferRange = bufferRange;
 
 			bindings.push_back(layoutBinding);
+
+			return *this;
+		}
+
+		MaterialLayout& MaterialLayout::addImageBinding(uint32_t binding, VkDescriptorType descriptorType, VkShaderStageFlags stageFlags, VkImageLayout imageLayout, uint32_t count) {
+			VkDescriptorSetLayoutBinding bind{};
+			bind.binding = binding;
+			bind.descriptorType = descriptorType;
+			bind.stageFlags = stageFlags;
+			bind.descriptorCount = count;
+
+			MaterialLayoutBinding layoutBinding{};
+			layoutBinding.binding = bind;
+			layoutBinding.bindingType = BINDING_TYPE_IMAGE;
+			layoutBinding.imageLayout = imageLayout;
+
+			bindings.push_back(layoutBinding);
+
+			return *this;
 		}
 
 		void MaterialLayout::createDescriptorLayout(VulkanDevice* pDevice) {
@@ -98,7 +71,7 @@ namespace engine {
 		void MaterialLayout::createPipeline(VulkanDevice* pDevice, VkRenderPass renderPass) {
 			// Create shader modules
 			VkShaderModule fragShader;
-			if (!loadShaderModule(pDevice, "../../shaders/" + shaderFileName + ".frag.spv", &fragShader)) {
+			if (!loadShaderModule(pDevice, "../../shaders/" + fragFileName + ".frag.spv", &fragShader)) {
 				util::displayMessage("Failed to build the fragment shader module", DISPLAY_TYPE_ERR);
 			}
 			else {
@@ -106,7 +79,7 @@ namespace engine {
 			}
 
 			VkShaderModule vertexShader;
-			if (!loadShaderModule(pDevice, "../../shaders/" + shaderFileName + ".vert.spv", &vertexShader)) {
+			if (!loadShaderModule(pDevice, "../../shaders/" + vertFileName + ".vert.spv", &vertexShader)) {
 				util::displayMessage("Failed to build the vertex shader module", DISPLAY_TYPE_ERR);
 			}
 			else {
@@ -191,14 +164,18 @@ namespace engine {
 			vkDestroyShaderModule(pDevice->getDevice(), vertexShader, nullptr);
 		}
 
+		MaterialLayout& MaterialLayout::finalize(VulkanDevice* pDevice, VkRenderPass renderPass) {
+			createDescriptorLayout(pDevice);
+			createPipeline(pDevice, renderPass);
+
+			return *this;
+		}
 
 		void MaterialLayout::cleanup(VulkanDevice* pDevice) {
 			setLayout = nullptr;
 
 			vkDestroyPipeline(pDevice->getDevice(), pipeline, nullptr);
 			vkDestroyPipelineLayout(pDevice->getDevice(), pipelineLayout, nullptr);
-
-			bIsCleanedUp = true;
 		}
 
 
@@ -280,28 +257,34 @@ namespace engine {
 
 		VulkanDevice* Material::pDevice;
 
-		std::unordered_map<std::string, Material*> Material::sMaterials;
+		std::unordered_map<std::string, std::unique_ptr<Material>> Material::sMaterials;
+
+		std::unordered_map<std::string, std::unique_ptr<MaterialLayout>> Material::sMaterialLayouts;
+
+		VkSampler Material::sGlobalSampler;
 
 		int Material::sFrameOverlap;
 
 
-		std::unique_ptr<Material> Material::create(std::string name, MaterialLayout* pLayout) {
-			std::unique_ptr<Material> newMat = std::make_unique<Material>(name, pLayout);
+		Material* Material::create(std::string name, MaterialLayout* pLayout) {
+			sMaterials[name] = std::make_unique<Material>(name, pLayout);
 
-			newMat->createMemoryObjects();
+			sMaterials[name]->createMemoryObjects();
 
-			newMat->initDescriptors();
+			return sMaterials[name].get();
+		}
 
-			return newMat;
+		MaterialLayout* Material::createMaterialLayout(std::string name, std::string vertFileName, std::string fragFileName) {
+			sMaterialLayouts[name] = std::make_unique<MaterialLayout>(vertFileName, fragFileName);
+
+			return sMaterialLayouts[name].get();
 		}
 
 		Material::Material(std::string name, MaterialLayout* layout) : mName{ name }, pMaterialLayout{ layout } {
-			sMaterials[mName] = this;
 		}
 
 		void Material::cleanup() {
-			if (!pMaterialLayout->bIsCleanedUp)
-				pMaterialLayout->cleanup(pDevice);
+			
 		}
 
 		void Material::bindGlobalSet(VkCommandBuffer cmd, int frameIndex) {
@@ -321,18 +304,70 @@ namespace engine {
 		void Material::bind(VkCommandBuffer cmd, int frameIndex) {
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pMaterialLayout->pipeline);
 
-			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pMaterialLayout->pipelineLayout, 2, 1, &mMaterialDescriptorSet, 0, nullptr);
+			if (pMaterialLayout->bindings.size() > 0)
+				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pMaterialLayout->pipelineLayout, 2, 1, &mMaterialDescriptorSet, 0, nullptr);
 		}
 
 		void Material::createMemoryObjects() {
+			if (pMaterialLayout->bindings.size() == 0)
+				return;
+
 			mMemoryObjects.resize(pMaterialLayout->bindings.size());
 
 			for (auto& i : pMaterialLayout->bindings) {
-				mMemoryObjects[i.binding.binding] = MaterialMemoryObject::createMemoryObject(i);
+				MaterialMemoryObject newMemObj{};
+
+				newMemObj.bindingType = i.bindingType;
+
+				switch (i.bindingType) {
+				case BINDING_TYPE_DATA: {
+					VkBufferUsageFlags usageFlags;
+
+					switch (i.binding.descriptorType) {
+					default:
+					case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+					case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
+						usageFlags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+						break;
+					case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+					case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
+						usageFlags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+						break;
+					}
+
+					newMemObj.buffer = memory::createBuffer(i.bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+					VkDescriptorBufferInfo bInfo{};
+					bInfo.buffer = newMemObj.buffer.buffer;
+					bInfo.offset = 0;
+					bInfo.range = i.bufferRange;
+
+					newMemObj.bufferInfo = bInfo;
+
+					memory::getAllocationDeletionQueue().pushFunction([=]() {
+						vmaDestroyBuffer(memory::getAllocator(), newMemObj.buffer.buffer, newMemObj.buffer.allocation);
+						});
+
+				} break;
+				case BINDING_TYPE_IMAGE: {
+
+					VkDescriptorImageInfo dimgInfo{};
+					dimgInfo.sampler = sGlobalSampler;
+					dimgInfo.imageLayout = i.imageLayout;
+
+					newMemObj.imageInfo = dimgInfo;
+				} break;
+				}
+
+
+				mMemoryObjects[i.binding.binding] = newMemObj;
 			}
 		}
 
 		void Material::initDescriptors() {
+			if (pMaterialLayout->bindings.size() == 0)
+				return;
+
 			VulkanDescriptorWriter setWriter(*pMaterialLayout->setLayout.get(), *sGlobalDescriptorPool.get());
 
 			for (auto& i : pMaterialLayout->bindings) {
@@ -342,6 +377,7 @@ namespace engine {
 
 					break;
 				case BINDING_TYPE_IMAGE:
+					setWriter.writeImage(i.binding.binding, i.binding.descriptorType, &mMemoryObjects[i.binding.binding].imageInfo);
 					break;
 				}
 			}
@@ -349,7 +385,7 @@ namespace engine {
 			setWriter.build(mMaterialDescriptorSet);
 		}
 
-		void Material::writeBuffer(uint32_t binding, void* data) {
+		Material& Material::writeBuffer(uint32_t binding, void* data) {
 			MaterialMemoryObject memObj = mMemoryObjects[binding];
 
 			if (memObj.bindingType != BINDING_TYPE_DATA) {
@@ -363,6 +399,22 @@ namespace engine {
 			memcpy(d, data, memObj.bufferInfo.range);
 
 			vmaUnmapMemory(memory::getAllocator(), memObj.buffer.allocation);
+
+			return *this;
+		}
+
+		Material& Material::writeImage(uint32_t binding, std::string textureName) {
+			Texture* tex = getTexture(textureName);
+
+			mMemoryObjects[binding].imageInfo.imageView = tex->imageView;
+
+			return *this;
+		}
+
+		Material& Material::finalize() {
+			initDescriptors();
+
+			return *this;
 		}
 
 
@@ -381,6 +433,11 @@ namespace engine {
 		void Material::initializeMaterials(VulkanDevice* device, VkRenderPass renderPass, int numFrames) {
 			pDevice = device;
 			sFrameOverlap = numFrames;
+
+			// Initialize sampler
+			VkSamplerCreateInfo samplerInfo = tools::createSamplerInfo(VK_FILTER_NEAREST);
+
+			vkCreateSampler(pDevice->getDevice(), &samplerInfo, nullptr, &sGlobalSampler);
 
 			// Build descriptor pool
 			VulkanDescriptorPool::Builder poolBuilder(*pDevice);
@@ -439,18 +496,29 @@ namespace engine {
 			BasicData data2{};
 			data2.color = glm::vec4{ 0.0f, 1.0f, 0.0f, 1.0f };
 
-			basicLayout.shaderFileName = "basic_mat";
+			Material::createMaterialLayout("basic_layout", "basic_mat", "basic_mat")
+				->addDataBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, padUniformBufferSize(sizeof(BasicData)), sizeof(BasicData))
+				.finalize(pDevice, renderPass);
 
-			basicLayout.addDataBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, padUniformBufferSize(sizeof(BasicData)), sizeof(BasicData));
+			Material::create("red", Material::getMaterialLayout("basic_layout"))->writeBuffer(0, &data1).finalize();
+			Material::create("green", Material::getMaterialLayout("basic_layout"))->writeBuffer(0, &data2).finalize();
 
-			basicLayout.createDescriptorLayout(pDevice);
-			basicLayout.createPipeline(pDevice, renderPass);
+			Material::createMaterialLayout("textured_layout", "textured_mat", "textured_mat")
+				->addDataBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, padUniformBufferSize(sizeof(BasicData)), sizeof(BasicData))
+				.addImageBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+				.finalize(pDevice, renderPass);
 
-			redMat = Material::create("red", &basicLayout);
-			greenMat = Material::create("green", &basicLayout);
+			Material::create("textured_red", Material::getMaterialLayout("textured_layout"))
+				->writeBuffer(0, &data1)
+				.writeImage(1, "rubiks")
+				.finalize();
 
-			redMat->writeBuffer(0, &data1);
-			greenMat->writeBuffer(0, &data2);
+			Material::createMaterialLayout("raymarch_layout", "raymarch_sphere", "raymarch_sphere")->finalize(pDevice, renderPass);
+
+			Material::create("raymarch_sphere", Material::getMaterialLayout("raymarch_layout"))->finalize();
+
+			Material::createMaterialLayout("fs_raymarch_layout", "fs_raymarch", "fs_raymarch")->finalize(pDevice, renderPass);
+			Material::create("fs_raymarch_mat", Material::getMaterialLayout("fs_raymarch_layout"))->finalize();
 
 
 			// Add buffers to deletion queue
@@ -460,18 +528,21 @@ namespace engine {
 			});
 		}
 
-		void Material::writeGlobalAndObjectData(int frameIndex, int objectCount, RenderObject* first, glm::vec3 camPos) {
-			glm::mat4 view = glm::translate(glm::mat4(1.0f), camPos);
+		void Material::writeGlobalAndObjectData(int frameIndex, int objectCount, RenderObject* first, glm::vec3 camPos, glm::vec3 camRot) {
+			glm::mat4 view = glm::rotate(glm::mat4{ 1.0f }, glm::radians(0.0f), glm::vec3(1, 0, 0)) * glm::rotate(glm::mat4{ 1.0f }, glm::radians(camRot.y), glm::vec3(0, 1, 0)) * glm::translate(glm::mat4(1.0f), camPos);
 			glm::mat4 proj = glm::perspective(glm::radians(70.0f), 1700.0f / 900.0f, 0.01f, 200.0f);
 			proj[1][1] *= -1;
 
 			glm::mat4 viewproj = proj * view;
 
 			GlobalData globalDataStruct;
-			globalDataStruct.cameraPos = { camPos.x, camPos.y, camPos.z, 0.0f };
+			globalDataStruct.cameraPos = { camPos.x, camPos.y, camPos.z, 1.0f };
+			globalDataStruct.aspect = { 1700.0f / 900.0f, 850, 450, 0 };
+			globalDataStruct.camDir = { 0, 0, 1, 1 };
 			globalDataStruct.proj = proj;
 			globalDataStruct.view = view;
 			globalDataStruct.viewproj = viewproj;
+			globalDataStruct.invViewProj = glm::inverse(viewproj);
 
 			// Copy data to the buffer
 			char* globalData;
@@ -496,7 +567,8 @@ namespace engine {
 
 			for (int i = 0; i < objectCount; i++) {
 				RenderObject& object = first[i];
-				objectSSBO[i + MAX_OBJECTS * frameIndex].transformMatrix = object.transformMatrix;
+				objectSSBO[i + MAX_OBJECTS * frameIndex].modelMatrix = object.transformMatrix;
+				objectSSBO[i + MAX_OBJECTS * frameIndex].inverseModel = glm::inverse(object.transformMatrix);
 			}
 
 			vmaUnmapMemory(memory::getAllocator(), sObjectBuffer.allocation);
@@ -506,12 +578,20 @@ namespace engine {
 			MaterialLayout::cleanupStaticLayouts();
 			
 			for (auto& entry : sMaterials) {
-				Material* mat = entry.second;
+				Material* mat = entry.second.get();
 
 				mat->cleanup();
 			}
+
+			for (auto& entry : sMaterialLayouts) {
+				MaterialLayout* mat = entry.second.get();
+
+				mat->cleanup(pDevice);
+			}
 			
 			sGlobalDescriptorPool = nullptr;
+
+			vkDestroySampler(pDevice->getDevice(), sGlobalSampler, nullptr);
 		}
 
 		Material* Material::getMaterial(const std::string& name) {
@@ -521,7 +601,18 @@ namespace engine {
 				return nullptr;
 			}
 			else {
-				return it->second;
+				return it->second.get();
+			}
+		}
+
+		MaterialLayout* Material::getMaterialLayout(const std::string& name) {
+			auto it = sMaterialLayouts.find(name);
+
+			if (it == sMaterialLayouts.end()) {
+				return nullptr;
+			}
+			else {
+				return it->second.get();
 			}
 		}
 	}

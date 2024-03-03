@@ -15,6 +15,9 @@ namespace engine {
 		bool holdingD{ false };
 		bool holdingCTRL{ false };
 		bool holdingSpace{ false };
+		bool holdingLeft{ false };
+		bool holdingRight{ false };
+
 
 		Window();
 

@@ -67,6 +67,12 @@ namespace engine {
 				case SDL_SCANCODE_SPACE:
 					holdingSpace = true;
 					break;
+				case SDL_SCANCODE_LEFT:
+					holdingLeft = true;
+					break;
+				case SDL_SCANCODE_RIGHT:
+					holdingRight = true;
+					break;
 				}
 			}
 			else if (e.type == SDL_KEYUP) {
@@ -88,6 +94,12 @@ namespace engine {
 					break;
 				case SDL_SCANCODE_SPACE:
 					holdingSpace = false;
+					break;
+				case SDL_SCANCODE_LEFT:
+					holdingLeft = false;
+					break;
+				case SDL_SCANCODE_RIGHT:
+					holdingRight = false;
 					break;
 				}
 			}

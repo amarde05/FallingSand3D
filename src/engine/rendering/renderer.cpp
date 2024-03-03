@@ -423,9 +423,10 @@ namespace engine {
 			/*initDescriptors();
 			createPipelines();*/
 			
+			loadTextures();
 			initMaterials();
 
-			//loadTextures();
+			
 			loadMeshes();
 
 			initScene();
@@ -435,6 +436,8 @@ namespace engine {
 
 		void Renderer::draw() {
 			float camMoveSpeed = 1.5f;
+			float camRotSpeed = 10.0f;
+
 			if (mWindow->holdingW) {
 				camPos.z += camMoveSpeed * 0.016f;
 			}
@@ -454,6 +457,13 @@ namespace engine {
 			}
 			else if (mWindow->holdingCTRL) {
 				camPos.y += camMoveSpeed * 0.016f;
+			}
+
+			if (mWindow->holdingRight) {
+				camRot.y += camRotSpeed * 0.016f;
+			}
+			else if (mWindow->holdingLeft) {
+				camRot.y -= camRotSpeed * 0.016f;
 			}
 
 			// Wait until the GPU has finished rendering the last frame. Timeout of 1 second
@@ -485,7 +495,7 @@ namespace engine {
 			}
 
 			VkClearValue clearValue;
-			float flash = abs(sin(mFrameNumber / 360.0f));
+			//float flash = abs(sin(mFrameNumber / 360.0f));
 			clearValue.color = { {0.0f, 0.0f, 1.0f, 1.0f } };
 
 			// Clear depth
@@ -595,7 +605,7 @@ namespace engine {
 		void Renderer::drawObjects(VkCommandBuffer cmd, RenderObject* first, int count) {
 			int frameIndex = mFrameNumber % FRAME_OVERLAP;
 			
-			Material::writeGlobalAndObjectData(frameIndex, count, first, camPos);
+			Material::writeGlobalAndObjectData(frameIndex, count, first, camPos, camRot);
 
 			Mesh* lastMesh = nullptr;
 			Material* lastMaterial = nullptr;
@@ -1240,15 +1250,24 @@ namespace engine {
 
 
 		void Renderer::loadMeshes() {
-			mTriangleMesh.vertices.resize(3);
+			mTriangleMesh.vertices.resize(6);
 
-			mTriangleMesh.vertices[0].position = { 1.f,1.f, 0.5f };
-			mTriangleMesh.vertices[1].position = { -1.f,1.f, 0.5f };
-			mTriangleMesh.vertices[2].position = { 0.f,-1.f, 0.5f };
+			mTriangleMesh.vertices[0].position = { 1.f,1.f, 0.0f };
+			mTriangleMesh.vertices[1].position = { -1.f,1.f, 0.0f };
+			mTriangleMesh.vertices[2].position = { -1.f,-1.f, 0.0f };
+			mTriangleMesh.vertices[3].position = { 1.f,-1.f, 0.0f };
+			mTriangleMesh.vertices[4].position = { 1.f,1.f, 0.0f };
+			mTriangleMesh.vertices[5].position = { -1.f,-1.f, 0.0f };
 
-			mTriangleMesh.vertices[0].color = { 0.f,1.f, 0.0f }; //pure green
-			mTriangleMesh.vertices[1].color = { 0.f,1.f, 0.0f }; //pure green
-			mTriangleMesh.vertices[2].color = { 0.f,1.f, 0.0f }; //pure green
+			mTriangleMesh.vertices[0].uv = { 0.f, 1.f };
+			mTriangleMesh.vertices[1].uv = { 1.f, 1.f };
+			mTriangleMesh.vertices[2].uv = { 1.f, 0.f };
+			mTriangleMesh.vertices[3].uv = { 0.f, 0.f };
+			mTriangleMesh.vertices[4].uv = { 0.f, 1.f };
+			mTriangleMesh.vertices[5].uv = { 1.f, 0.f };
+
+			Mesh cubeMesh{};
+			cubeMesh.loadFromObj("../../assets/cube2.obj");
 
 			mMesh.loadFromObj("../../assets/monkey_smooth.obj");
 			//mTeapotMesh.loadFromObj("../../assets/teapot.obj");
@@ -1259,11 +1278,13 @@ namespace engine {
 			uploadMesh(mMesh);
 			//uploadMesh(mTeapotMesh);
 			uploadMesh(mVikingRoom);
+			uploadMesh(cubeMesh);
 			
 			mMeshes["monkey"] = mMesh;
 			mMeshes["triangle"] = mTriangleMesh;
 			//mMeshes["teapot"] = mTeapotMesh;
 			mMeshes["empire"] = mVikingRoom;
+			mMeshes["cube"] = cubeMesh;
 		}
 
 		void Renderer::loadTextures() {
@@ -1276,8 +1297,18 @@ namespace engine {
 
 			addTexture("viking_diffuse", vikingRoom);
 
+			Texture rubiks;
+
+			loadImageFromFile(*this, "../../assets/rubiks.png", rubiks.image);
+
+			VkImageViewCreateInfo imageInfo2 = tools::createImageViewInfo(VK_FORMAT_R8G8B8A8_SRGB, rubiks.image.image, VK_IMAGE_ASPECT_COLOR_BIT);
+			vkCreateImageView(mDevice->getDevice(), &imageInfo2, nullptr, &rubiks.imageView);
+
+			addTexture("rubiks", rubiks);
+
 			mMainDeletionQueue.pushFunction([=]() {
 				vkDestroyImageView(mDevice->getDevice(), vikingRoom.imageView, nullptr);
+				vkDestroyImageView(mDevice->getDevice(), rubiks.imageView, nullptr);
 			});
 		}
 
@@ -1288,16 +1319,16 @@ namespace engine {
 
 		void Renderer::initScene() {
 			RenderObject monkey;
-			monkey.mesh = getMesh("monkey");
-			monkey.material = Material::getMaterial("red");
+			monkey.mesh = getMesh("cube");
+			monkey.material = Material::getMaterial("raymarch_sphere");
 			monkey.transformMatrix = glm::mat4{ 1.0f };
 
 			mRenderables.push_back(monkey);
 
-			for (int x = -25; x <= 25; x++) {
+			/*for (int x = -25; x <= 25; x++) {
 				for (int y = -25; y <= 25; y++) {
 					RenderObject tri;
-					tri.mesh = getMesh("monkey");
+					tri.mesh = getMesh("cube");
 					tri.material = Material::getMaterial("green");
 					glm::mat4 translation = glm::translate(glm::mat4{1.0f}, glm::vec3(x, 0, y));
 					glm::mat4 scale = glm::scale(glm::mat4{1.0f}, glm::vec3(0.2f, 0.2f, 0.2f));
@@ -1306,6 +1337,19 @@ namespace engine {
 					mRenderables.push_back(tri);
 				}
 			}
+
+			for (int x = -25; x <= 25; x++) {
+				for (int y = -25; y <= 25; y++) {
+					RenderObject tri;
+					tri.mesh = getMesh("cube");
+					tri.material = Material::getMaterial("textured_red");
+					glm::mat4 translation = glm::translate(glm::mat4{1.0f}, glm::vec3(x, 5, y));
+					glm::mat4 scale = glm::scale(glm::mat4{1.0f}, glm::vec3(0.2f, 0.2f, 0.2f));
+					tri.transformMatrix = translation * scale;
+
+					mRenderables.push_back(tri);
+				}
+			}*/
 
 			//VkSamplerCreateInfo samplerInfo = tools::createSamplerInfo(VK_FILTER_NEAREST);
 
